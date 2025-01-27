@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="QmEFcw" name="Sick Delay" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" cppLanguageStandard="20"
+              pluginCode="CDLY" pluginManufacturer="sialboat" companyName="sialboat">
+  <MAINGROUP id="wb8SnN" name="Sick Delay">
+    <GROUP id="{B1231E76-6B7F-04F1-E3F9-F7DC7BDCA46B}" name="Source">
+      <FILE id="me2tv6" name="Distortion.cpp" compile="1" resource="0" file="Source/Distortion.cpp"/>
+      <FILE id="ZJaOgP" name="Distortion.h" compile="0" resource="0" file="Source/Distortion.h"/>
+      <FILE id="v0K5Ss" name="BypassGradient.cpp" compile="1" resource="0"
+            file="Source/BypassGradient.cpp"/>
+      <FILE id="Ha6Z5M" name="BypassGradient.h" compile="0" resource="0"
+            file="Source/BypassGradient.h"/>
+      <FILE id="JfqOdD" name="LevelMeter.cpp" compile="1" resource="0" file="Source/LevelMeter.cpp"/>
+      <FILE id="yQC5E4" name="Measurement.h" compile="0" resource="0" file="Source/Measurement.h"/>
+      <FILE id="CRep7U" name="LevelMeter.h" compile="0" resource="0" file="Source/LevelMeter.h"/>
+      <FILE id="k5r3w6" name="DelayLine.cpp" compile="1" resource="0" file="Source/DelayLine.cpp"/>
+      <FILE id="a3h6VE" name="DelayLine.h" compile="0" resource="0" file="Source/DelayLine.h"/>
+      <FILE id="ByF3ez" name="Tempo.cpp" compile="1" resource="0" file="Source/Tempo.cpp"/>
+      <FILE id="vSOUAR" name="Tempo.h" compile="0" resource="0" file="Source/Tempo.h"/>
+      <FILE id="XssvjI" name="DSP.h" compile="0" resource="0" file="Source/DSP.h"/>
+      <FILE id="e4q7QB" name="ProtectYourEars.h" compile="0" resource="0"
+            file="../../../../Downloads/getting-started-book-main/Resources/ProtectYourEars.h"/>
+      <FILE id="QTUy8V" name="RotaryKnob.cpp" compile="1" resource="0" file="Source/RotaryKnob.cpp"/>
+      <FILE id="VfOIFv" name="RotaryKnob.h" compile="0" resource="0" file="Source/RotaryKnob.h"/>
+      <FILE id="c7GxN4" name="Parameters.cpp" compile="1" resource="0" file="Source/Parameters.cpp"/>
+      <FILE id="bbWcKD" name="Parameters.h" compile="0" resource="0" file="Source/Parameters.h"/>
+      <FILE id="iouwBy" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="OwzvQk" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="xVpvak" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/LookAndFeel.cpp"/>
+      <FILE id="KfZ0vV" name="LookAndFeel.h" compile="0" resource="0" file="Source/LookAndFeel.h"/>
+      <FILE id="sO5ziU" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="UTE48g" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+    <GROUP id="{1666E508-E3DE-9FD9-35BA-099178ABBAC7}" name="Assets">
+      <FILE id="DNRJEz" name="sickDelay logo.png" compile="0" resource="1"
+            file="../../../../Downloads/sickDelay logo.png"/>
+      <FILE id="QG83a6" name="Noise.png" compile="0" resource="1" file="../../../../Downloads/getting-started-book-main/Resources/Noise.png"/>
+      <FILE id="sumsTC" name="Bypass.png" compile="0" resource="1" file="../../../../Downloads/getting-started-book-main/Resources/Bypass.png"/>
+      <FILE id="dAHZze" name="Lato-Medium.ttf" compile="0" resource="1" file="../../../../Downloads/getting-started-book-main/Resources/Lato-Medium.ttf"/>
+    </GROUP>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="sickDelay" recommendedWarnings="LLVM"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Sick Delay"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../../../../../Applications/JUCE/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+</JUCERPROJECT>
