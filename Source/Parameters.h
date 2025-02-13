@@ -29,7 +29,12 @@ const juce::ParameterID fxSelectParamID {"distortionType", 1};
 
 const juce::ParameterID filterButtonParamID {"filterButton", 1};
 const juce::ParameterID clipperButtonParamID {"clipperButton", 1};
-const juce::ParameterID softClipParamID {"softClipDrive", 1};
+const juce::ParameterID fxLocationButtonParamID {"fxLocation", 1};
+const juce::ParameterID delayQualityButtonParamID {"delayQuality", 1};
+
+const juce::ParameterID softClipDriveParamID {"softClipDrive", 1};
+const juce::ParameterID softClipMixParamID {"softClipMix", 1};
+const juce::ParameterID autoGainParamID {"autoGain", 1};
 
 
 class Parameters
@@ -59,29 +64,32 @@ public:
     float highCut = 20000.0f;
     
     int delayNote = 0;
-    float distortionDrive = 0.0f;
-    int distortionMode = 0;
     
     int clipperMode = 0; //for clipperButton, 0 == OFF, 1 == Soft Clipping, 2 == Hard Clipping
+
+    int fxLocation = 1; //0 = fx processes dry signal only. 1 = fx is in feedback loop. 2 = fx processes dry and wet signal
+    int delayQuality = 1; //0 = linear, 1 = lagrange, 2 = cubic, 3 = hermite. This is a ComboBox
     
     bool filterButton = false; //false == PRE filter, TRUE == POST filter
     
     bool bypassed = false;
     int delayMode = 0; //0 == varispeed, 1 == crossfade
-//    bool delayMode = true; //false == crossfading, true == varispeed
     
     static constexpr float minDelayTime = 5.0f;
     static constexpr float maxDelayTime = 5000.0f;
     
     bool tempoSync = false;
     
+    bool autoGain = false;
+    float softClipDrive = 0.0f;
+    float softClipMix = 0.0f;
+    
+    
     juce::AudioParameterBool* tempoSyncParam;
     juce::AudioParameterBool* bypassParam;
     juce::AudioParameterBool* delayModeParam;
-    
-    juce::AudioParameterFloat* softClipParam;
-    juce::AudioParameterFloat* hardClipParam;
-    juce::AudioParameterFloat* inflatorCurveParam;
+    juce::AudioParameterInt* delayQualityButtonParam;
+    juce::AudioParameterBool* autoGainParam;
     
 private:
     
@@ -120,10 +128,12 @@ private:
     juce::AudioParameterBool* filterButtonParam;
     
     juce::AudioParameterInt* clipperButtonParam;
+    juce::AudioParameterInt* fxLocationButtonParam;
     
-    
-    
-    
+    juce::AudioParameterFloat* softClipDriveParam;
+    juce::AudioParameterFloat* softClipMixParam;
+    juce::LinearSmoothedValue<float> softClipDriveSmoother;
+    juce::LinearSmoothedValue<float> softClipMixSmoother;
     
 //    juce::AudioParameterFloat* fxAmountParam;
 //    juce::LinearSmoothedValue<float> fxAmountSmoother;

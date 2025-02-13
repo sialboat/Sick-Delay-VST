@@ -65,7 +65,7 @@ void RotaryKnobLookAndFeel::drawRotarySlider( juce::Graphics& g,
     
     auto center = bounds.getCentre();
     auto radius = bounds.getWidth() / 2.0f;
-    auto lineWidth = 4.0f;
+    auto lineWidth = 3.0f;
     auto arcRadius = radius - lineWidth/2.0f;
     
     juce::Path backgroundArc;
@@ -74,14 +74,17 @@ void RotaryKnobLookAndFeel::drawRotarySlider( juce::Graphics& g,
     g.setColour(Colors::Knob::trackBackground);
     g.strokePath(backgroundArc, strokeType);
     
-    auto dialRadius = innerRect.getHeight() / 2.0f;
-    auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-    
     //given an angle of rotation and a radius, the x-position is radius * cos(angle), the y-position is radius * sin(angle)
     //sin and cos are swapped here because juce thinks 0º is at the top of the circle, whereas math people believe it is on the right.
-    juce::Point<float> dialStart(center.x, center.y);
-    juce::Point<float> dialEnd(center.x + dialRadius * std::sin(toAngle), center.y - dialRadius * std::cos(toAngle));
     
+    auto dialRadius = innerRect.getHeight()/2.0f - lineWidth;
+    auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+
+    juce::Point<float> dialStart(center.x + 10.0f * std::sin(toAngle),
+                                 center.y - 10.0f * std::cos(toAngle));
+    juce::Point<float> dialEnd(center.x + dialRadius * std::sin(toAngle),
+                               center.y - dialRadius * std::cos(toAngle));
+
     juce::Path dialPath;
     dialPath.startNewSubPath(dialStart);
     dialPath.lineTo(dialEnd);
@@ -393,7 +396,7 @@ void ComboBoxLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label&
 {
     //x, y, w, h
     auto bounds = box.getLocalBounds().toFloat();
-    label.setBounds(1, 1, (int)bounds.getWidth(), (int)bounds.getHeight());
+    label.setBounds(1, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
     label.setJustificationType(juce::Justification::centred);
     auto font = getComboBoxFont(box);
     label.setFont(font);

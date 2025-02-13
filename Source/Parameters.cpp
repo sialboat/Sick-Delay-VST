@@ -98,7 +98,13 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
     castParameter(apvts, delayModeParamID, delayModeParam);
     castParameter(apvts, filterButtonParamID, filterButtonParam);
     castParameter(apvts, clipperButtonParamID, clipperButtonParam);
-//    apvts_ = apvts;
+    
+    castParameter(apvts, autoGainParamID, autoGainParam);
+    castParameter(apvts, softClipDriveParamID, softClipDriveParam);
+    castParameter(apvts, softClipMixParamID, softClipMixParam);
+    
+//    castParameter(apvts, fxLocationButtonParamID, fxLocationButtonParam);
+    castParameter(apvts, delayQualityButtonParamID, delayQualityButtonParam);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
@@ -188,13 +194,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
     
     layout.add(std::make_unique<juce::AudioParameterInt>(clipperButtonParamID, "Clipper", 0, 2, 0));
     
-//    layout.add(std::make_unique<juce::AudioParameterFloat>(
-//       distortionDriveParamID,
-//       "Drive",
-//       juce::NormalisableRange<float>(0.0f, 36.0f, 0.1f, 0.3f),
-//       0.0f,
-//       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromDecibels)
-//   ));
     
     juce::StringArray fxTypes = {
       "Off", "Soft Clip", "Hard Clip", "Inflator", "Bitcrusher", "CWO", "Pitch Shifter", "Chorus", "Ext. Out"
@@ -203,6 +202,31 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
     layout.add(std::make_unique<juce::AudioParameterChoice>(fxSelectParamID, "FX", fxTypes, 0));
     
     layout.add(std::make_unique<juce::AudioParameterBool>(filterButtonParamID, "Filter Pre/Post", false));
+    
+    //=========
+    //soft clip
+    //=========
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+       softClipMixParamID,
+       "Mix",
+       juce::NormalisableRange<float>(0.0f, 100.0f, 1.0f),
+       40.0f,
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)));
+    
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+       softClipDriveParamID,
+       "Drive",
+       juce::NormalisableRange<float>{0.0f, 24.0f},
+       0.0f,
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromDecibels)
+       ));
+    
+    layout.add(std::make_unique<juce::AudioParameterBool>(autoGainParamID, "Auto Gain", false));
+    
+    
+    //output buttons
+    layout.add(std::make_unique<juce::AudioParameterInt>(delayQualityButtonParamID, "Interpolation", 0, 3, 1));
+    
     
     return layout;
 }
@@ -229,6 +253,8 @@ void Parameters::prepareToPlay(double sampleRate) noexcept
     lowCutSmoother.reset(sampleRate, duration);
     highCutSmoother.reset(sampleRate, duration);
     
+    softClipMixSmoother.reset(sampleRate, duration);
+    softClipDriveSmoother.reset(sampleRate, duration);
 //    distortionDriveSmoother.reset(sampleRate, duration);
 }
 
@@ -259,9 +285,13 @@ void Parameters::reset() noexcept
     highCut = 20000.0f;
     highCutSmoother.setCurrentAndTargetValue(highCutParam->get());
     
-    distortionDrive = 0.0f;
+    softClipDrive = 0.0f;
+    softClipDriveSmoother.setCurrentAndTargetValue(softClipDriveParam->get());
+    softClipMix = 0.0f;
+    softClipMixSmoother.setCurrentAndTargetValue(softClipMixParam->get());
 //    distortionDriveSmoother.setCurrentAndTargetValue(distortionDriveParam->get());
     
+    autoGain = false;
     filterButton = false;
     delayMode = false;
 }
@@ -297,6 +327,10 @@ void Parameters::update() noexcept
     filterButton = filterButtonParam->get();
     
     clipperMode = clipperButtonParam->get();
+    
+    softClipDriveSmoother.setTargetValue(juce::Decibels::decibelsToGain(softClipDriveParam->get()));
+    softClipMixSmoother.setTargetValue(softClipMixParam->get() * 0.01f);
+    autoGain = autoGainParam->get();
 //    delayMode = apvts.getRawParameterValue(delayModeParamID)->load();
 }
 
@@ -317,5 +351,7 @@ void Parameters::smoothen() noexcept
     lowCut = lowCutSmoother.getNextValue();
     highCut = highCutSmoother.getNextValue();
     
+    softClipDrive = softClipDriveSmoother.getNextValue();
+    softClipMix = softClipMixSmoother.getNextValue();
 //    distortionDrive = distortionDriveSmoother.getNextValue();
 }

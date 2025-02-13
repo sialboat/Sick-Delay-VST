@@ -35,11 +35,11 @@ void LevelMeter::paint(juce::Graphics& g)
     drawLevel(g, dbLevelR, 9, 7);
     
     g.setFont(Fonts::getFont(10.0f));
-    for(float db = maxdB; db >= mindB; db -= stepdB) {
+    for(float db = maxdB; db >= mindB; db -= stepdB) { //meter tickline
         int y = positionForLevel(db);
         
         g.setColour(Colors::LevelMeter::tickLine);
-        g.fillRect(0, y, 16, 1);
+        g.fillRect(0, y, 25, 1);
         
         g.setColour(Colors::LevelMeter::tickLabel);
         g.drawSingleLineText(juce::String(int(db)), bounds.getWidth(), y + 3, juce::Justification::right);

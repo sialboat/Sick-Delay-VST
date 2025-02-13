@@ -46,7 +46,6 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     delayGroup.addAndMakeVisible(tempoSyncButton);
     
     clipperButton.setButtonText(clipperText[clipperButtonIndex]);
-//    clipperButton.setEnabled(true);
     clipperButton.setClickingTogglesState(true);
     clipperButton.setBounds(0, 0, 70, 27);
     clipperButton.setLookAndFeel(EnabledButtonLookAndFeel::get());
@@ -57,6 +56,7 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
         clipperButtonIndex = (clipperButtonIndex + 1) % clipperText.size();
         clipperButton.setButtonText(clipperText[clipperButtonIndex]);
     };
+    
     
 //    delayModeButton.setButtonText("Mode");
 //    delayModeButton.setClickingTogglesState(true);
@@ -72,6 +72,16 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     
     delayGroup.addAndMakeVisible(comboBox);
     
+    delayQualityBox.setEnabled(true);
+    delayQualityBox.setLookAndFeel(ComboBoxLookAndFeel::get());
+    delayQualityBox.addItem("Linear", 1);
+    delayQualityBox.addItem("Lagrange", 2);
+    delayQualityBox.addItem("Cubic", 3);
+    delayQualityBox.addItem("Hermite", 4);
+    delayQualityBox.setSelectedId(2);
+    
+    outputGroup.addAndMakeVisible(delayQualityBox);
+    
     //for the clipper button
     
     fxGroup.setText("FX");
@@ -85,7 +95,7 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     preFXButton.getProperties().set("roundRight", false);
     preFXButton.setLookAndFeel(HalfRoundedButtonLookAndFeel::get());
     preFXButton.setToggleState(true, juce::dontSendNotification); //sets pre filter button to be on by default
-    fxGroup.addAndMakeVisible(preFXButton);
+    feedbackGroup.addAndMakeVisible(preFXButton);
     
     postFXButton.setButtonText("Post");
     postFXButton.setClickingTogglesState(true);
@@ -93,11 +103,20 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     postFXButton.getProperties().set("roundLeft", false);
     postFXButton.getProperties().set("roundRight", true);
     postFXButton.setLookAndFeel(HalfRoundedButtonLookAndFeel::get());
-    fxGroup.addAndMakeVisible(postFXButton);
+    feedbackGroup.addAndMakeVisible(postFXButton);
     
     preFXButton.setRadioGroupId(filterButtons);
     postFXButton.setRadioGroupId(filterButtons);
     
+    fxGroup.addChildComponent(softClipMixKnob);
+    fxGroup.addChildComponent(softClipDriveKnob);
+    autoGainButton.setClickingTogglesState(true);
+    autoGainButton.setBounds(0, 0, 70, 27);
+    autoGainButton.setLookAndFeel(ButtonLookAndFeel::get());
+    fxGroup.addAndMakeVisible(softClipDriveKnob);
+    fxGroup.addAndMakeVisible(softClipMixKnob);
+    fxGroup.addAndMakeVisible(autoGainButton);
+//    fxGroup.addChildComponent(autoGainButton);
     
     addAndMakeVisible(fxGroup);
     
@@ -118,7 +137,7 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
 
     
     //for the rotary knob to appear in the desired coordinates, setSize() needs to be at the bottom apparantly.
-    setSize(820, 480);
+    setSize(760, 400);
     
     setLookAndFeel(&mainLF);
     
@@ -176,9 +195,9 @@ void ClipDelayAudioProcessorEditor::resized()
     
     //positioning bounds
     delayGroup.setBounds(10, y, 110, height);
-    outputGroup.setBounds(bounds.getWidth() - 180, y, 170, height);
-    fxGroup.setBounds(outputGroup.getX() - 200, y, 190, height);
-    feedbackGroup.setBounds(delayGroup.getRight() + 10, y, fxGroup.getX() - delayGroup.getRight() - 20, height);
+    outputGroup.setBounds(bounds.getWidth() - 190, y, 180, height);
+    feedbackGroup.setBounds(delayGroup.getRight() + 10, y, 210, height);
+    fxGroup.setBounds(feedbackGroup.getRight() + 10, y, 210, height);
     
 //    feedbackGroup.setBounds(distortionGroup.getRight() + 10, y, distortionGroup.getX() - delayGroup.getRight() - 20, height);
     //376 width for fxgroup
@@ -189,7 +208,7 @@ void ClipDelayAudioProcessorEditor::resized()
     delayTimeKnob.setTopLeftPosition(20, 20);
     tempoSyncButton.setTopLeftPosition(20, delayTimeKnob.getBottom() + 5);
     delayNoteKnob.setTopLeftPosition(delayTimeKnob.getX(), delayTimeKnob.getY());
-    spreadKnob.setTopLeftPosition(20, tempoSyncButton.getBottom() + 10);
+    spreadKnob.setTopLeftPosition(20, tempoSyncButton.getBottom() + 20);
     delayModeButton.setTopLeftPosition(20, spreadKnob.getBottom() + 20);
     comboBox.setBounds(spreadKnob.getX(), spreadKnob.getBottom() + 5,
                        tempoSyncButton.getWidth(), tempoSyncButton.getHeight());
@@ -199,20 +218,29 @@ void ClipDelayAudioProcessorEditor::resized()
     //output group
     mixKnob.setTopLeftPosition(20, 20);
     gainKnob.setTopLeftPosition(mixKnob.getX(), tempoSyncButton.getBottom() + 10);
-    meter.setBounds(outputGroup.getWidth() - 45, 30, 30, gainKnob.getBottom() - 30);
+    meter.setBounds(outputGroup.getWidth() - 60, 30, 45, gainKnob.getBottom() - 30);
     clipperButton.setTopLeftPosition(gainKnob.getX(), mixKnob.getBottom() + 10);
+    delayQualityBox.setBounds(gainKnob.getX(), gainKnob.getBottom() + 10,
+                              tempoSyncButton.getWidth(), tempoSyncButton.getHeight());
     
     //feedback group
-    feedbackKnob.setTopLeftPosition(30, 8);
-    stereoKnob.setTopLeftPosition(feedbackKnob.getRight() + 30, 8);
-    lowCutKnob.setTopLeftPosition(feedbackKnob.getX(), feedbackKnob.getBottom() - 10);
+    feedbackKnob.setTopLeftPosition(20, 20);
+    stereoKnob.setTopLeftPosition(feedbackKnob.getRight() + 30, feedbackKnob.getY());
+    lowCutKnob.setTopLeftPosition(feedbackKnob.getX(), feedbackKnob.getBottom() + 20);
     highCutKnob.setTopLeftPosition(lowCutKnob.getRight() + 30, lowCutKnob.getY());
-    
-    //distortion group
-    fxSelectKnob.setTopLeftPosition(20, 20);
-//    fxAmountKnob.setTopLeftPosition(fxSelectKnob.getX(), highCutKnob.getY() + 10);
-    preFXButton.setTopLeftPosition(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10);
+    preFXButton.setTopLeftPosition(lowCutKnob.getX(), lowCutKnob.getBottom() + 20);
     postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
+    
+    //fx group
+    fxSelectKnob.setTopLeftPosition(60, 8);
+//    fxAmountKnob.setTopLeftPosition(fxSelectKnob.getX(), highCutKnob.getY() + 10);
+//    preFXButton.setTopLeftPosition(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10);
+//    postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
+    softClipDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
+    softClipMixKnob.setTopLeftPosition(softClipDriveKnob.getRight() + 30, softClipDriveKnob.getY());
+    autoGainButton.setButtonText("Auto Gain");
+    autoGainButton.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 120); //doing this in consideration for
+//    softClipMixKnob.setTopLeftPosition
 //    distortionDriveKnob.setTopLeftPosition(30, 20);
 }
 

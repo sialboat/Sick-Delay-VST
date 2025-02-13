@@ -19,12 +19,17 @@ public:
     void reset() noexcept;
     
     void write(float input) noexcept;
-    float read(float delayInSamples) const noexcept;
+    float read(float delayInSamples, int mode = 1) const noexcept;
     
     int getBufferLength() const noexcept
     {
         return bufferLength;
     }
+    
+    float lagrange(float delayInSamples) const noexcept;
+    float cubic(float delayInSamples) const noexcept;
+    float hermite(float delayInSamples) const noexcept;
+    float linear(float delayInSamples) const noexcept;
     
 private:
     std::unique_ptr<float[]> buffer; //smart pointer that automatically manages lifetime of allocated memory (no need to de-allocate)

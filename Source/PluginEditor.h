@@ -131,25 +131,29 @@ private:
     RotaryKnob mixKnob {"Mix", audioProcessor.apvts, mixParamID};
     RotaryKnob delayTimeKnob {"Delay Time", audioProcessor.apvts, delayTimeParamID};
     RotaryKnob spreadKnob {"Spread", audioProcessor.apvts, spreadParamID, true};
-    RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true, 105, 129, 36};
-    RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true, 105, 129, 36};
-    RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false, 105, 129, 36}; //
-    RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false, 105, 129, 36};
-    RotaryKnob delayNoteKnob {"Note", audioProcessor.apvts, delayNoteParamID};
-    RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID, false, 105, 129, 36};
+//    RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true, 105, 129, 36};
+//    RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true, 105, 129, 36};
+//    RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false, 105, 129, 36}; //
+//    RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false, 105, 129, 36};
+    RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true};
+    RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true};
+    RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false}; //
+    RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false};
     
+    RotaryKnob delayNoteKnob {"Note", audioProcessor.apvts, delayNoteParamID};
+    RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID, false, 88, 108, 36};
+    
+    RotaryKnob softClipDriveKnob {"Drive", audioProcessor.apvts, softClipDriveParamID};
+    RotaryKnob softClipMixKnob {"Mix", audioProcessor.apvts, softClipMixParamID};
 //    RotaryKnob softClipKnob {"Drive (soft clip)", audioProcessor.apvts, softClipParamID};
 //    RotaryKnob softClipMixKnob {"Mix (soft clip)", audioProcessor.apvts, }
 //    RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID}; //false, 88, 108, 36
     
-//    RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true};
-//    RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true};
-//    RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false}; //
-//    RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false};
 //    RotaryKnob fxAmountKnob {"Amount", audioProcessor.apvts, fxDriveParamID}; //false, 88, 108, 36
     
     juce::TextButton tempoSyncButton;
     juce::TextButton delayModeButton;
+    juce::TextButton autoGainButton;
     
     juce::TextButton preFXButton;
     juce::TextButton postFXButton;
@@ -160,6 +164,20 @@ private:
     MultiStateButtonAttachment clipperAttachment {
         audioProcessor.apvts, clipperButtonParamID.getParamID(), clipperButton
     };
+    
+    juce::ComboBox delayQualityBox;
+    juce::TextButton fxLocationButton;
+    int fxLocationIndex = 0;
+    
+//    juce::StringArray fxLocation = {"Dry", "Wet", "Dry+Wet"};
+//    MultiStateButtonAttachment locationAttachment {
+//        audioProcessor.apvts, fxLocationButtonParamID.getParamID(), fxLocationButton
+//    };
+    
+    
+//    juce::TextButton delayQualityButton;
+//    int delayQualityButtonIndex = 1; //default is lagrange
+//    juce::StringArray quality {"Linear", "Lagrange", "Hermite", "Cubic"};
     
     BypassGradient bypassGradient;
     
