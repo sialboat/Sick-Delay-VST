@@ -108,14 +108,19 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     preFXButton.setRadioGroupId(filterButtons);
     postFXButton.setRadioGroupId(filterButtons);
     
-    fxGroup.addChildComponent(softClipMixKnob);
-    fxGroup.addChildComponent(softClipDriveKnob);
+    //softclip
+    
     autoGainButton.setClickingTogglesState(true);
     autoGainButton.setBounds(0, 0, 70, 27);
     autoGainButton.setLookAndFeel(ButtonLookAndFeel::get());
-    fxGroup.addAndMakeVisible(softClipDriveKnob);
-    fxGroup.addAndMakeVisible(softClipMixKnob);
-    fxGroup.addAndMakeVisible(autoGainButton);
+    fxGroup.addChildComponent(autoGainButton);
+    fxGroup.addChildComponent(tapeTubeDriveKnob);
+    fxGroup.addChildComponent(tapeTubeMixKnob);
+    //    fxGroup.addChildComponent(softClipMixKnob);
+    //    fxGroup.addChildComponent(softClipDriveKnob);
+//    fxGroup.addAndMakeVisible(softClipDriveKnob);
+//    fxGroup.addAndMakeVisible(softClipMixKnob);
+//    fxGroup.addAndMakeVisible(autoGainButton);
 //    fxGroup.addChildComponent(autoGainButton);
     
     addAndMakeVisible(fxGroup);
@@ -135,21 +140,43 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
                            0.0f);
     addAndMakeVisible(bypassButton);
 
-    
     //for the rotary knob to appear in the desired coordinates, setSize() needs to be at the bottom apparantly.
     setSize(760, 400);
     
     setLookAndFeel(&mainLF);
     
     updateDelayKnobs(audioProcessor.params.tempoSyncParam->get());
+    updateFxKnobs(audioProcessor.params.fxSelectParam->getIndex(), true);
     
     audioProcessor.params.tempoSyncParam->addListener(this);
+    audioProcessor.params.tapeTubeDriveParam->addListener(this);
+    audioProcessor.params.tapeTubeMixParam->addListener(this);
+    
+    audioProcessor.params.fxSelectParam->addListener(this);
+    
+//    juce::MessageManager::callAsync([this]()
+//    {
+//        audioProcessor.params.tempoSyncParam->addListener(this);
+//        audioProcessor.params.distDriveParam->addListener(this);
+//        audioProcessor.params.distMixParam->addListener(this);
+//        
+//    });
+    
+    
+    
 //    audioProcessor.params.delayModeParam->addListener(this);
 }
 
 ClipDelayAudioProcessorEditor::~ClipDelayAudioProcessorEditor()
 {
     audioProcessor.params.tempoSyncParam->removeListener(this);
+    
+    audioProcessor.params.tapeTubeDriveParam->removeListener(this);
+    audioProcessor.params.tapeTubeMixParam->removeListener(this);
+    
+    audioProcessor.params.fxSelectParam->removeListener(this);
+    
+    
     setLookAndFeel(nullptr);
 }
 
@@ -232,34 +259,82 @@ void ClipDelayAudioProcessorEditor::resized()
     postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
     
     //fx group
-    fxSelectKnob.setTopLeftPosition(60, 8);
 //    fxAmountKnob.setTopLeftPosition(fxSelectKnob.getX(), highCutKnob.getY() + 10);
 //    preFXButton.setTopLeftPosition(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10);
 //    postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
-    softClipDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
-    softClipMixKnob.setTopLeftPosition(softClipDriveKnob.getRight() + 30, softClipDriveKnob.getY());
+    fxSelectKnob.setTopLeftPosition(60, 8);
+    tapeTubeDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
+    tapeTubeMixKnob.setTopLeftPosition(tapeTubeDriveKnob.getRight() + 30, tapeTubeDriveKnob.getY());
     autoGainButton.setButtonText("Auto Gain");
     autoGainButton.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 120); //doing this in consideration for
 //    softClipMixKnob.setTopLeftPosition
 //    distortionDriveKnob.setTopLeftPosition(30, 20);
 }
 
-void ClipDelayAudioProcessorEditor::parameterValueChanged(int, float value)
+//if(audioProcessor.params.tempoSync) {
+//    updateDelayKnobs(value != 0.0f);
+//}
+
+void ClipDelayAudioProcessorEditor::parameterValueChanged(int paramIndex, float value)
 {
+//    auto* param = audioProcessor.params
+    DBG("parameter index: " << paramIndex);
     DBG("param changed: " << value);
-    if(juce::MessageManager::getInstance()->isThisTheMessageThread())
-        updateDelayKnobs(value != 0.0f);
-    else {
-        juce::MessageManager::callAsync([this, value]
-        {
+//    auto* tempoParam = dynamic_cast<juce::AudioParameterBool*>(params);
+//    auto* fxParam = dynamic_cast<juce::AudioParameterChoice*>(params);
+//    auto* param = audioProcessor.getParameter(paramIndex);
+
+    if(juce::MessageManager::getInstance()->isThisTheMessageThread()) { //running on message thread
+        if(paramIndex == 8) //DELAY
             updateDelayKnobs(value != 0.0f);
+        if(paramIndex == 13) { //FX SELECTOR
+            updateFxKnobs((int)(value * 10), value != 0.0f);
+        }
+//        if(tempoParam->getParameterID().equalsIgnoreCase("tempoSyncParamID")) {
+//            updateDelayKnobs(value != 0.0f);
+//        }
+//        if(param->getName(0).equalsIgnoreCase("Tempo Sync"))
+//            updateDelayKnobs(value != 0.0f);
+//        "fxType"
+    }
+    else { //not running on message thread
+        
+        //schedules the task so that it doesn't run on the messanger thread
+        juce::MessageManager::callAsync([this, paramIndex, value]
+        {
+            if(paramIndex == 8)
+                updateDelayKnobs(value != 0.0f);
+            if(paramIndex == 13)
+                updateFxKnobs((int)(value * 10), value != 0.0f);
+            
         });
     }
-    
 }
 
 void ClipDelayAudioProcessorEditor::updateDelayKnobs(bool tempoSyncActive)
 {
     delayTimeKnob.setVisible(!tempoSyncActive);
     delayNoteKnob.setVisible(tempoSyncActive);
+}
+
+void ClipDelayAudioProcessorEditor::updateFxKnobs(int fxIndex, bool flag)
+{
+    DBG("index value: " << fxIndex);
+    switch(fxIndex) {
+        case 0:
+            break;
+        case 1:
+            break;
+        case 2:
+            tapeTubeDriveKnob.setVisible(flag);
+            tapeTubeMixKnob.setVisible(flag);
+            autoGainButton.setVisible(flag);
+            break;
+        default:
+            tapeTubeDriveKnob.setVisible(!flag);
+            tapeTubeMixKnob.setVisible(!flag);
+            autoGainButton.setVisible(!flag);
+            break;
+            
+    }
 }

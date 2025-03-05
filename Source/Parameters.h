@@ -25,15 +25,15 @@ const juce::ParameterID bypassParamID {"bypass", 1};
 const juce::ParameterID delayModeParamID {"delayMode", 1};
 const juce::ParameterID spreadParamID {"spread", 1};
 //const juce::ParameterID distortionDriveParamID {"drive", 1};
-const juce::ParameterID fxSelectParamID {"distortionType", 1};
+const juce::ParameterID fxSelectParamID {"fxType", 1};
 
 const juce::ParameterID filterButtonParamID {"filterButton", 1};
 const juce::ParameterID clipperButtonParamID {"clipperButton", 1};
 const juce::ParameterID fxLocationButtonParamID {"fxLocation", 1};
 const juce::ParameterID delayQualityButtonParamID {"delayQuality", 1};
 
-const juce::ParameterID softClipDriveParamID {"softClipDrive", 1};
-const juce::ParameterID softClipMixParamID {"softClipMix", 1};
+const juce::ParameterID tapeTubeDriveParamID {"distDrive", 1};
+const juce::ParameterID tapeTubeMixParamID {"distMix", 1};
 const juce::ParameterID autoGainParamID {"autoGain", 1};
 
 
@@ -69,6 +69,7 @@ public:
 
     int fxLocation = 1; //0 = fx processes dry signal only. 1 = fx is in feedback loop. 2 = fx processes dry and wet signal
     int delayQuality = 1; //0 = linear, 1 = lagrange, 2 = cubic, 3 = hermite. This is a ComboBox
+    int fxSelect = 0; 
     
     bool filterButton = false; //false == PRE filter, TRUE == POST filter
     
@@ -81,8 +82,8 @@ public:
     bool tempoSync = false;
     
     bool autoGain = false;
-    float softClipDrive = 0.0f;
-    float softClipMix = 0.0f;
+    float tapeTubeDrive = 0.0f;
+    float tapeTubeMix = 0.0f;
     
     
     juce::AudioParameterBool* tempoSyncParam;
@@ -90,6 +91,14 @@ public:
     juce::AudioParameterBool* delayModeParam;
     juce::AudioParameterInt* delayQualityButtonParam;
     juce::AudioParameterBool* autoGainParam;
+    
+    juce::AudioParameterChoice* fxSelectParam;
+    
+    juce::AudioParameterFloat* tapeTubeDriveParam;
+    juce::AudioParameterFloat* tapeTubeMixParam;
+    
+    juce::LinearSmoothedValue<float> tapeTubeDriveSmoother;
+    juce::LinearSmoothedValue<float> tapeTubeMixSmoother;
     
 private:
     
@@ -123,17 +132,10 @@ private:
     
     juce::AudioParameterChoice* delayNoteParam;
     
-    juce::AudioParameterChoice* fxSelectParam;
-    
     juce::AudioParameterBool* filterButtonParam;
     
     juce::AudioParameterInt* clipperButtonParam;
     juce::AudioParameterInt* fxLocationButtonParam;
-    
-    juce::AudioParameterFloat* softClipDriveParam;
-    juce::AudioParameterFloat* softClipMixParam;
-    juce::LinearSmoothedValue<float> softClipDriveSmoother;
-    juce::LinearSmoothedValue<float> softClipMixSmoother;
     
 //    juce::AudioParameterFloat* fxAmountParam;
 //    juce::LinearSmoothedValue<float> fxAmountSmoother;

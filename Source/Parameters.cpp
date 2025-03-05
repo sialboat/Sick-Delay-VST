@@ -100,8 +100,9 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
     castParameter(apvts, clipperButtonParamID, clipperButtonParam);
     
     castParameter(apvts, autoGainParamID, autoGainParam);
-    castParameter(apvts, softClipDriveParamID, softClipDriveParam);
-    castParameter(apvts, softClipMixParamID, softClipMixParam);
+    castParameter(apvts, tapeTubeDriveParamID, tapeTubeDriveParam);
+    castParameter(apvts, tapeTubeMixParamID, tapeTubeMixParam);
+    castParameter(apvts, fxSelectParamID, fxSelectParam);
     
 //    castParameter(apvts, fxLocationButtonParamID, fxLocationButtonParam);
     castParameter(apvts, delayQualityButtonParamID, delayQualityButtonParam);
@@ -196,7 +197,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
     
     
     juce::StringArray fxTypes = {
-      "Off", "Soft Clip", "Hard Clip", "Inflator", "Bitcrusher", "CWO", "Pitch Shifter", "Chorus", "Ext. Out"
+        "Tape/Tube", "Fold", "Cabinet", "Decimator", "Bitcrusher", "CWO", "Pitch", "Chorus", "Ext. Out"
     };
     
     layout.add(std::make_unique<juce::AudioParameterChoice>(fxSelectParamID, "FX", fxTypes, 0));
@@ -204,17 +205,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
     layout.add(std::make_unique<juce::AudioParameterBool>(filterButtonParamID, "Filter Pre/Post", false));
     
     //=========
-    //soft clip
+    //distortion
     //=========
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-       softClipMixParamID,
+       tapeTubeMixParamID,
        "Mix",
        juce::NormalisableRange<float>(0.0f, 100.0f, 1.0f),
        40.0f,
        juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-       softClipDriveParamID,
+       tapeTubeDriveParamID,
        "Drive",
        juce::NormalisableRange<float>{0.0f, 24.0f},
        0.0f,
@@ -235,6 +236,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 void Parameters::prepareToPlay(double sampleRate) noexcept
 {
     double duration = 0.05;
+    fxSelect = 0;
     gainSmoother.reset(sampleRate, duration);
     
     //to adjust how fast the delay time reacts, change the number multiplied by the float
@@ -243,6 +245,7 @@ void Parameters::prepareToPlay(double sampleRate) noexcept
     coeff = 1.0f - std::exp(-1.0f / (0.2f * float(sampleRate)));
     
     mixSmoother.reset(sampleRate, duration);
+//    fxSelectParam.reset(sampleRate, duration);
     
     feedbackSmoother.reset(sampleRate, duration);
     
@@ -253,8 +256,8 @@ void Parameters::prepareToPlay(double sampleRate) noexcept
     lowCutSmoother.reset(sampleRate, duration);
     highCutSmoother.reset(sampleRate, duration);
     
-    softClipMixSmoother.reset(sampleRate, duration);
-    softClipDriveSmoother.reset(sampleRate, duration);
+    tapeTubeMixSmoother.reset(sampleRate, duration);
+    tapeTubeDriveSmoother.reset(sampleRate, duration);
 //    distortionDriveSmoother.reset(sampleRate, duration);
 }
 
@@ -279,16 +282,18 @@ void Parameters::reset() noexcept
     
     stereoSmoother.setCurrentAndTargetValue(stereoParam->get() * 0.01f);
     
+    fxSelect = 0;
+    
     lowCut = 20.0f;
     lowCutSmoother.setCurrentAndTargetValue(lowCutParam->get());
     
     highCut = 20000.0f;
     highCutSmoother.setCurrentAndTargetValue(highCutParam->get());
     
-    softClipDrive = 0.0f;
-    softClipDriveSmoother.setCurrentAndTargetValue(softClipDriveParam->get());
-    softClipMix = 0.0f;
-    softClipMixSmoother.setCurrentAndTargetValue(softClipMixParam->get());
+    tapeTubeDrive = 0.0f;
+    tapeTubeDriveSmoother.setCurrentAndTargetValue(tapeTubeDriveParam->get());
+    tapeTubeMix = 1.0f;
+    tapeTubeMixSmoother.setCurrentAndTargetValue(tapeTubeMixParam->get());
 //    distortionDriveSmoother.setCurrentAndTargetValue(distortionDriveParam->get());
     
     autoGain = false;
@@ -304,6 +309,8 @@ void Parameters::update() noexcept
     if(delayTime == 0.0f) {
         delayTime = targetDelayTime;
     }
+    
+    fxSelect = fxSelectParam->getIndex();
     
     mixSmoother.setTargetValue(mixParam->get() * 0.01f);
     
@@ -328,8 +335,8 @@ void Parameters::update() noexcept
     
     clipperMode = clipperButtonParam->get();
     
-    softClipDriveSmoother.setTargetValue(juce::Decibels::decibelsToGain(softClipDriveParam->get()));
-    softClipMixSmoother.setTargetValue(softClipMixParam->get() * 0.01f);
+    tapeTubeDriveSmoother.setTargetValue(juce::Decibels::decibelsToGain(tapeTubeDriveParam->get()));
+    tapeTubeMixSmoother.setTargetValue(tapeTubeMixParam->get() * 0.01f);
     autoGain = autoGainParam->get();
 //    delayMode = apvts.getRawParameterValue(delayModeParamID)->load();
 }
@@ -351,7 +358,7 @@ void Parameters::smoothen() noexcept
     lowCut = lowCutSmoother.getNextValue();
     highCut = highCutSmoother.getNextValue();
     
-    softClipDrive = softClipDriveSmoother.getNextValue();
-    softClipMix = softClipMixSmoother.getNextValue();
+    tapeTubeDrive = tapeTubeDriveSmoother.getNextValue();
+    tapeTubeMix = tapeTubeMixSmoother.getNextValue();
 //    distortionDrive = distortionDriveSmoother.getNextValue();
 }

@@ -47,6 +47,8 @@ private:
     float softClip(float sample, float drive); //tanh(alphax)
     float hardClip(float sample);
     float inflator(float sample, float curve);
+    float cubic(float sample);
+    float tapeTube(float sample, float curve);
     
     //this won't be fully implemented for the release version as there are far too many effects to think about here
     float saturator(float sample); //we can try arctan(2xalpha/pi) x>=0 and arctan(alphax) x <= 0

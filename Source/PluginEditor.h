@@ -99,7 +99,8 @@ private:
 //==============================================================================
 
 // private thing is to let the processor editor know when to make things visible / invisible.
-class ClipDelayAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::AudioProcessorParameter::Listener
+class ClipDelayAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                      private juce::AudioProcessorParameter::Listener
 {
 public:
     ClipDelayAudioProcessorEditor (ClipDelayAudioProcessor&);
@@ -114,14 +115,25 @@ public:
     void resized() override;
 
 private:
+    // This reference is provided as a quick way for your editor to
+    // access the processor object that created it.
+    
+//    void timerCallback() override
+//    {
+//        audioProcessor.params.tempoSyncParam->addListener(this);
+//        audioProcessor.params.distDriveParam->addListener(this);
+//        audioProcessor.params.distMixParam->addListener(this);
+//        audioProcessor.params.fxSelectParam->addListener(this);
+//
+//        stopTimer();
+//    }
     
     void parameterValueChanged(int, float) override;
     void parameterGestureChanged(int, bool) override { }
     void updateDelayKnobs(bool tempoSyncActive);
-    
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    void updateFxKnobs(int fxIndex, bool flag);
     ClipDelayAudioProcessor& audioProcessor;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipDelayAudioProcessorEditor)
     
@@ -143,8 +155,11 @@ private:
     RotaryKnob delayNoteKnob {"Note", audioProcessor.apvts, delayNoteParamID};
     RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID, false, 88, 108, 36};
     
-    RotaryKnob softClipDriveKnob {"Drive", audioProcessor.apvts, softClipDriveParamID};
-    RotaryKnob softClipMixKnob {"Mix", audioProcessor.apvts, softClipMixParamID};
+    RotaryKnob tapeTubeDriveKnob {"Drive", audioProcessor.apvts, tapeTubeDriveParamID};
+    RotaryKnob tapeTubeMixKnob {"Mix", audioProcessor.apvts, tapeTubeMixParamID};
+    
+//    RotaryKnob dudKnob1 {"Dud", }
+//    RotaryKnob dudKnob2 {};
 //    RotaryKnob softClipKnob {"Drive (soft clip)", audioProcessor.apvts, softClipParamID};
 //    RotaryKnob softClipMixKnob {"Mix (soft clip)", audioProcessor.apvts, }
 //    RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID}; //false, 88, 108, 36
