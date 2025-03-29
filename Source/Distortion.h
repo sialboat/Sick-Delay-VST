@@ -25,30 +25,35 @@ public:
         int distMode;
         float distDrive;
         float distCurve;
-        float distMix;
+        float distBias;
     } controls;
     
     Distortion();
     ~Distortion();
     
-    float processSample(float sample);
+    float processSample(float sample, float mix);
+    void setBias(float val) {controls.distBias = val; }
+    void setMode(int distMode_) { controls.distMode = distMode_; }
     
-    void setValues(int distMode_, float distDrive_, float distCurve_, float distMix_)
+    //sets basic values for each distortion.
+    void setValues(int distMode_, float distDrive_, float distCurve_)
     {
         controls.distMode = distMode_;
         controls.distDrive = distDrive_;
         controls.distCurve = distCurve_;
-        controls.distMix = distMix_;
     }
+    
     
 private:
     float input, output = 0.0f;
     
-    float softClip(float sample, float drive); //tanh(alphax)
+    float softClip(float sample); //tanh(alphax)
     float hardClip(float sample);
     float inflator(float sample, float curve);
     float cubic(float sample);
-    float tapeTube(float sample, float curve);
+    float tapeTube(float sample, float drive, float curve, float bias);
+    float oddEven (float sample, float drive, float curve);
+    float swell (float sample, float drive, float curve);
     
     //this won't be fully implemented for the release version as there are far too many effects to think about here
     float saturator(float sample); //we can try arctan(2xalpha/pi) x>=0 and arctan(alphax) x <= 0

@@ -118,20 +118,14 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     
-//    void timerCallback() override
-//    {
-//        audioProcessor.params.tempoSyncParam->addListener(this);
-//        audioProcessor.params.distDriveParam->addListener(this);
-//        audioProcessor.params.distMixParam->addListener(this);
-//        audioProcessor.params.fxSelectParam->addListener(this);
-//
-//        stopTimer();
-//    }
-    
     void parameterValueChanged(int, float) override;
     void parameterGestureChanged(int, bool) override { }
     void updateDelayKnobs(bool tempoSyncActive);
-    void updateFxKnobs(int fxIndex, bool flag);
+    void updateFxKnobs(int fxIndex, float val, bool flag);
+    void updateDistortionFx(int distIndex, bool flag);
+    void updateModulationFx(int modIndex, bool flag);
+    void updateTimeFx(int timeIndex, bool flag);
+    
     ClipDelayAudioProcessor& audioProcessor;
     
     
@@ -139,14 +133,15 @@ private:
     
     //70 86 24 is default, 105 129 36 is 1.5x higher
     //88 108 30 is 1.25x higher,
+    //    RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true, 105, 129, 36};
+    //    RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true, 105, 129, 36};
+    //    RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false, 105, 129, 36}; //
+    //    RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false, 105, 129, 36};
+    
     RotaryKnob gainKnob {"Gain", audioProcessor.apvts, gainParamID, true};
     RotaryKnob mixKnob {"Mix", audioProcessor.apvts, mixParamID};
     RotaryKnob delayTimeKnob {"Delay Time", audioProcessor.apvts, delayTimeParamID};
     RotaryKnob spreadKnob {"Spread", audioProcessor.apvts, spreadParamID, true};
-//    RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true, 105, 129, 36};
-//    RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true, 105, 129, 36};
-//    RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false, 105, 129, 36}; //
-//    RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false, 105, 129, 36};
     RotaryKnob feedbackKnob {"Feedback", audioProcessor.apvts, feedbackParamID, true};
     RotaryKnob stereoKnob {"Stereo", audioProcessor.apvts, stereoParamID, true};
     RotaryKnob lowCutKnob {"Low Cut", audioProcessor.apvts, lowCutParamID, false}; //
@@ -157,14 +152,8 @@ private:
     
     RotaryKnob tapeTubeDriveKnob {"Drive", audioProcessor.apvts, tapeTubeDriveParamID};
     RotaryKnob tapeTubeMixKnob {"Mix", audioProcessor.apvts, tapeTubeMixParamID};
-    
-//    RotaryKnob dudKnob1 {"Dud", }
-//    RotaryKnob dudKnob2 {};
-//    RotaryKnob softClipKnob {"Drive (soft clip)", audioProcessor.apvts, softClipParamID};
-//    RotaryKnob softClipMixKnob {"Mix (soft clip)", audioProcessor.apvts, }
-//    RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID}; //false, 88, 108, 36
-    
-//    RotaryKnob fxAmountKnob {"Amount", audioProcessor.apvts, fxDriveParamID}; //false, 88, 108, 36
+    RotaryKnob tapeTubeCurveKnob {"Tape/Tube", audioProcessor.apvts, tapeTubeCurveParamID};
+    RotaryKnob tapeTubeBiasKnob {"Bias", audioProcessor.apvts, tapeTubeBiasParamID, true};
     
     juce::TextButton tempoSyncButton;
     juce::TextButton delayModeButton;
@@ -183,6 +172,13 @@ private:
     juce::ComboBox delayQualityBox;
     juce::TextButton fxLocationButton;
     int fxLocationIndex = 0;
+    
+    juce::ComboBox distortionSelectBox;
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment distortionSelectAttachment {
+        audioProcessor.apvts, distortionSelectParamID.getParamID(),distortionSelectBox
+    };
+    
+    juce::ComboBox modulationSelectBox;
     
 //    juce::StringArray fxLocation = {"Dry", "Wet", "Dry+Wet"};
 //    MultiStateButtonAttachment locationAttachment {

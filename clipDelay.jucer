@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="QmEFcw" name="Sick Delay" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" cppLanguageStandard="20"
-              pluginCode="CDLY" pluginManufacturer="sialboat" companyName="sialboat">
+              pluginCode="SDLY" pluginManufacturer="sialboat" companyName="sialboat">
   <MAINGROUP id="wb8SnN" name="Sick Delay">
     <GROUP id="{B1231E76-6B7F-04F1-E3F9-F7DC7BDCA46B}" name="Source">
       <FILE id="me2tv6" name="Distortion.cpp" compile="1" resource="0" file="Source/Distortion.cpp"/>

@@ -10,23 +10,27 @@
 
 #include "Distortion.h"
 
+template <typename T> static int sgn(T val)
+{
+    return (T(0)) < val - (val < T(0));
+}
+
 Distortion::Distortion()
 {
     controls.distMode = 0;
     controls.distDrive = 1.0f;
-    controls.distMix = 0.0f;
     controls.distCurve = 0.0f;
+    controls.distBias = 0.0f;
 }
 Distortion::~Distortion() {}
 
-float Distortion::processSample(float sample)
+float Distortion::processSample(float sample, float mix)
 {
     input = sample;
-    output = input * controls.distDrive;
     
     switch(controls.distMode) {
         case 1:
-            output = softClip(sample, controls.distDrive);
+            output = softClip(sample);
             break;
         case 2:
             output = hardClip(sample);
@@ -34,17 +38,28 @@ float Distortion::processSample(float sample)
         case 3:
             output = inflator(sample, controls.distCurve);
             break;
+        case 4:
+            output = tapeTube(sample, controls.distDrive, controls.distCurve, controls.distBias);
+            break;
+        case 5:
+            output = swell(sample, controls.distDrive, controls.distCurve);
+            break;
+        case 6:
+            output = oddEven(sample, controls.distDrive, controls.distCurve);
         default:
             output = input;
             break;
     }
     
-    return (1.0f - controls.distMix) * input + controls.distMix * output;
+    return ((1.0f - mix) * input) + (mix * output);
 }
 
-float Distortion::softClip(float sample, float drive)
+float Distortion::softClip(float sample)
 {
-    return tanh(sample * drive);
+    if(sample > 1.0f || sample < -1.0f) {
+        return tanh(sample);
+    }
+    return sample;
 }
 
 float Distortion::hardClip(float sample)
@@ -67,4 +82,26 @@ float Distortion::inflator(float sample, float curve)
     
     return (A * sample) + (B * pow(sample, 2.0f)) + (C * pow(sample, 3.0f)) -
     ((D * (pow(sample, 2.0f)) - (2 * pow(sample, 3.0f)) + pow(sample, 4.0f)));
+}
+
+float Distortion::tapeTube(float sample, float drive, float curve, float bias)
+{
+//    float tape = tanh(curve + drive * sample);
+    //bias for tape can only be from -1 to 1, should be around -5 to 5 for tube, double check.
+    float tape = (float)(2 / M_PI) * atan(drive * sample + bias);
+    float tube = 1 - exp((-1 * abs(sample)) * (drive + (3.7f * bias) * sgn(sample)));
+    
+    return (1 - curve) * tape + curve * tube;
+}
+
+float Distortion::swell(float sample, float drive, float curve)
+{
+    return ((1 + drive) * sample) / (1 + pow((abs(drive * sample)), curve) );
+}
+
+float Distortion::oddEven(float sample, float drive, float curve)
+{
+    float odd = tanh(sample * drive);
+    float even = tanh(sample * drive) * tanh(sample * drive);
+    return (1 - curve) * odd + curve * even;
 }

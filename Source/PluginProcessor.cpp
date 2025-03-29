@@ -19,6 +19,8 @@ ClipDelayAudioProcessor::ClipDelayAudioProcessor() : AudioProcessor (BusesProper
 {
     lowCutFilter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
     highCutFilter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+    outputClipper = std::make_unique<Distortion>(); //way to use unique_ptr
+    fxDistortion = std::make_unique<Distortion>();
 }
 
 ClipDelayAudioProcessor::~ClipDelayAudioProcessor()
@@ -109,8 +111,6 @@ void ClipDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     delayLineR.setMaximumDelayInSamples(maxDelayInSamples);
     delayLineL.reset();
     delayLineR.reset();
-//    delayLine.setMaximumDelayInSamples(maxDelayInSamples);
-//    delayLine.reset();
     
     feedbackL = 0.0f;
     feedbackR = 0.0f;
@@ -162,6 +162,20 @@ bool ClipDelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
     
     return false;
 }
+
+float ClipDelayAudioProcessor::processEffect(int fxIndex, float sample)
+{
+//    DBG("fx index: " << fxIndex);
+
+    float output = sample;
+    switch(fxIndex) {
+        case 0: //tapeTube
+            fxDistortion->setMode(fxIndex);
+            output = fxDistortion->processSample(sample, params.tapeTubeMix);
+        break;
+    }
+    return output;
+}
 //#endif
 
 void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[maybe_unused]] juce::MidiBuffer& midiMessages)
@@ -169,22 +183,6 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-    
-//    int testClipButton = params.clipperMode;
-//    switch(testClipButton) {
-//        case 0:
-//            DBG("bypass");
-//            break;
-//        case 1:
-//            DBG("soft clip");
-//            break;
-//        case 2:
-//            DBG("hard clip");
-//            break;
-//        default:
-//            DBG("shouldn't get here");
-//            break;
-//    }
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -205,6 +203,7 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
 
     params.update(); //adjusts parameter values
     tempo.update(getPlayHead()); //gathers tempo-based value information
+    outputClipper->setValues(params.clipperMode, 1.0f, 0.0f); //clipper mode
     
     //limits delay time to the maximum delay duration
     float syncedTime = float(tempo.getMillisecondsForNoteLength(params.delayNote));
@@ -212,8 +211,6 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
 
     float sampleRate = float(getSampleRate());
 
-//    float* channelDataL = buffer.getWritePointer(0);
-//    float* channelDataR = buffer.getWritePointer(1);
     auto mainInput = getBusBuffer(buffer, true, 0);
     auto mainInputChannels = mainInput.getNumChannels();
     auto isMainInputStereo = mainInputChannels > 1;
@@ -228,7 +225,7 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
     
     float maxL = 0.0f;
     float maxR = 0.0f;
-//    DBG("Spread: " << params.spread);s
+    //    DBG("Spread: " << params.spread);
     //use the juce::dsp::WaveShaper class to to add a clipper / drive
     
 //    auto choice = apvts.getRawParameterValue(delayModeParamID.getParamID())->load();
@@ -270,12 +267,6 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
                     xfadeR = xfadeInc;
                 }
             }
-            if(xfadeL == 0.0f) { //only start a crossfade
-
-            }
-            if(xfadeR == 0.0f) { //only start a crossfade
-
-            }
         }
 
         if(params.lowCut != lastLowCut) {
@@ -292,16 +283,18 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
         
         float mono = (dryL + dryR) * 0.5f;
 
+        //we process the effect somewhere here i think
+        
         delayLineL.write(mono*params.panL + feedbackR); //push these samples into the delay line
         delayLineR.write(mono*params.panR + feedbackL); //alternating L and R for ping-pong delay
         
-        float wetL = delayLineL.read(delayInSamplesL); //reading delayed samples with stereo spread
-        float wetR = delayLineR.read(delayInSamplesR);
+        float wetL = delayLineL.read(delayInSamplesL, params.delayQuality); //reading delayed samples with stereo spread
+        float wetR = delayLineR.read(delayInSamplesR, params.delayQuality);
 //
         if(params.delayMode) {
             if(xfadeL > 0.0f) {
                 //read new sample values at the new delay length
-                float newL = delayLineL.read(targetDelayL);
+                float newL = delayLineL.read(targetDelayL, params.delayQuality);
 //                    float newR = delayLineR.read(targetDelayR);
                 
                 //perform a crossfade
@@ -316,7 +309,7 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
                 }
             }
             if(xfadeR > 0.0f) {
-                float newR = delayLineR.read(targetDelayR);
+                float newR = delayLineR.read(targetDelayR, params.delayQuality);
                 
                 wetR = (1.0f - xfadeR) * wetR + xfadeR * newR;
                 
@@ -329,19 +322,38 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
             }
         }
         
+        // PRE
+//        if(!params.filterButton) {
+//            feedbackL = processEffect(params.fxSelect / 100, sample);
+//            feedbackR = processEffect(params.fxSelect / 100, sample);
+//        }
+        
+        //or effect processing here
         feedbackL = wetL * params.feedback;
+        feedbackR = wetR * params.feedback;
+                    
+        //FILTER PROCESSING
         feedbackL = lowCutFilter.processSample(0, feedbackL);
         feedbackL = highCutFilter.processSample(0, feedbackL);
-        
-        feedbackR = wetR * params.feedback;
         feedbackR = lowCutFilter.processSample(1, feedbackR);
         feedbackR = highCutFilter.processSample(1, feedbackR);
+        
+        // POST
+//        if(params.filterButton) {
+//            feedbackL = processEffect(params.fxSelect / 100, sample);
+//            feedbackR = processEffect(params.fxSelect / 100, sample);
+//        }
 
+        //turns up wet mix based on the dry/wet.
 //            float mixL = dryL + wetL * params.mix; //calculating a dry/wet
 //            float mixR = dryR + wetR * params.mix;
+        
         //linear interpolation of dry/wet mix. when mix is 100%, you will only hear the wet signal.
         float mixL = dryL * (1.0f - params.mix) + wetL * params.mix;
         float mixR = dryR * (1.0f - params.mix) + wetR * params.mix;
+        
+        mixL = outputClipper->processSample(mixL, 1.0f);
+        mixR = outputClipper->processSample(mixR, 1.0f);
         
         float outL = mixL * params.gain;
         float outR = mixR * params.gain;

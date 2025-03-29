@@ -32,8 +32,12 @@ const juce::ParameterID clipperButtonParamID {"clipperButton", 1};
 const juce::ParameterID fxLocationButtonParamID {"fxLocation", 1};
 const juce::ParameterID delayQualityButtonParamID {"delayQuality", 1};
 
-const juce::ParameterID tapeTubeDriveParamID {"distDrive", 1};
-const juce::ParameterID tapeTubeMixParamID {"distMix", 1};
+const juce::ParameterID distortionSelectParamID {"distortionSelect", 1};
+
+const juce::ParameterID tapeTubeDriveParamID {"tapeTubeDrive", 1};
+const juce::ParameterID tapeTubeMixParamID {"tapeTubeMix", 1};
+const juce::ParameterID tapeTubeCurveParamID {"tapeTubeCurve", 1};
+const juce::ParameterID tapeTubeBiasParamID {"tapeTubeBias", 1};
 const juce::ParameterID autoGainParamID {"autoGain", 1};
 
 
@@ -48,8 +52,6 @@ public:
     void reset() noexcept;
     void update() noexcept;
     void smoothen() noexcept;
-    
-//    void 
     
     //this is set to 0.0f because C++ can't guarantee every declared vairable to be initially set to 0.
     float gain = 0.0f;
@@ -69,7 +71,7 @@ public:
 
     int fxLocation = 1; //0 = fx processes dry signal only. 1 = fx is in feedback loop. 2 = fx processes dry and wet signal
     int delayQuality = 1; //0 = linear, 1 = lagrange, 2 = cubic, 3 = hermite. This is a ComboBox
-    int fxSelect = 0; 
+    int fxSelect = 0; //0 = distortion, 1 = modulation, 2 = time, 3 = ext.out
     
     bool filterButton = false; //false == PRE filter, TRUE == POST filter
     
@@ -81,10 +83,13 @@ public:
     
     bool tempoSync = false;
     
+    int distortionSelect = 0; //0 = tapeTube, 1 = Odd/Even, 2 = Swell, 3 = Deci/Crush
+    
     bool autoGain = false;
     float tapeTubeDrive = 0.0f;
     float tapeTubeMix = 0.0f;
-    
+    float tapeTubeCurve = 0.0f;
+    float tapeTubeBias = 0.0f;
     
     juce::AudioParameterBool* tempoSyncParam;
     juce::AudioParameterBool* bypassParam;
@@ -93,12 +98,17 @@ public:
     juce::AudioParameterBool* autoGainParam;
     
     juce::AudioParameterChoice* fxSelectParam;
+    juce::AudioParameterInt* distortionSelectParam;
     
     juce::AudioParameterFloat* tapeTubeDriveParam;
     juce::AudioParameterFloat* tapeTubeMixParam;
+    juce::AudioParameterFloat* tapeTubeCurveParam;
+    juce::AudioParameterFloat* tapeTubeBiasParam;
     
     juce::LinearSmoothedValue<float> tapeTubeDriveSmoother;
     juce::LinearSmoothedValue<float> tapeTubeMixSmoother;
+    juce::LinearSmoothedValue<float> tapeTubeCurveSmoother;
+    juce::LinearSmoothedValue<float> tapeTubeBiasSmoother;
     
 private:
     

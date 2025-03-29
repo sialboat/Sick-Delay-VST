@@ -13,6 +13,7 @@
 #include "Tempo.h"
 #include "DelayLine.h"
 #include "Measurement.h"
+#include "Distortion.h"
 
 //==============================================================================
 /**
@@ -67,9 +68,12 @@ public:
     Measurement levelL, levelR;
     
     juce::AudioProcessorParameter* getBypassParameter() const override;
+    float processEffect(int fxIndex, float sample);
     
 private:
     DelayLine delayLineL, delayLineR;
+    std::unique_ptr <Distortion> outputClipper;
+    std::unique_ptr <Distortion> fxDistortion;
     
     float feedbackL = 0.0f;
     float feedbackR = 0.0f;

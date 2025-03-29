@@ -57,13 +57,6 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
         clipperButton.setButtonText(clipperText[clipperButtonIndex]);
     };
     
-    
-//    delayModeButton.setButtonText("Mode");
-//    delayModeButton.setClickingTogglesState(true);
-//    delayModeButton.setBounds(0, 0, 70, 27);
-//    delayModeButton.setLookAndFeel(ButtonLookAndFeel::get());
-    
-//    comboBox.setTextWhenNothingSelected("Delay Modes");
     comboBox.setEnabled(true);
     comboBox.setLookAndFeel(ComboBoxLookAndFeel::get()); //forgot this line lmao
     comboBox.addItem("Analog", 1);
@@ -108,7 +101,7 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     preFXButton.setRadioGroupId(filterButtons);
     postFXButton.setRadioGroupId(filterButtons);
     
-    //softclip
+    //distortion
     
     autoGainButton.setClickingTogglesState(true);
     autoGainButton.setBounds(0, 0, 70, 27);
@@ -116,10 +109,19 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     fxGroup.addChildComponent(autoGainButton);
     fxGroup.addChildComponent(tapeTubeDriveKnob);
     fxGroup.addChildComponent(tapeTubeMixKnob);
-    //    fxGroup.addChildComponent(softClipMixKnob);
-    //    fxGroup.addChildComponent(softClipDriveKnob);
-//    fxGroup.addAndMakeVisible(softClipDriveKnob);
-//    fxGroup.addAndMakeVisible(softClipMixKnob);
+    fxGroup.addChildComponent(tapeTubeCurveKnob);
+    fxGroup.addChildComponent(tapeTubeBiasKnob);
+//    fxGroup.addChildComponent(distortionSelectBox);
+    juce::StringArray distortions = {
+        "Tape/Tube", "Odd/Even", "Swell", "Deci/Crush"
+    };
+    distortionSelectBox.setEnabled(true);
+    distortionSelectBox.setLookAndFeel(ComboBoxLookAndFeel::get());
+//    distortionSelectBox.addItem("Tape/Tube", 1);
+//    distortionSelectBox.addItem("Odd/Even", 2);
+    distortionSelectBox.addItemList(distortions, 1);
+    distortionSelectBox.setSelectedId(1);
+    fxGroup.addChildComponent(distortionSelectBox);
 //    fxGroup.addAndMakeVisible(autoGainButton);
 //    fxGroup.addChildComponent(autoGainButton);
     
@@ -141,16 +143,18 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     addAndMakeVisible(bypassButton);
 
     //for the rotary knob to appear in the desired coordinates, setSize() needs to be at the bottom apparantly.
-    setSize(760, 400);
+    setSize(760, 440);
     
     setLookAndFeel(&mainLF);
     
     updateDelayKnobs(audioProcessor.params.tempoSyncParam->get());
-    updateFxKnobs(audioProcessor.params.fxSelectParam->getIndex(), true);
+    updateFxKnobs(audioProcessor.params.fxSelectParam->getIndex(), -1, true);
+    updateDistortionFx(audioProcessor.params.distortionSelectParam->get(), true);
     
     audioProcessor.params.tempoSyncParam->addListener(this);
-    audioProcessor.params.tapeTubeDriveParam->addListener(this);
-    audioProcessor.params.tapeTubeMixParam->addListener(this);
+    audioProcessor.params.distortionSelectParam->addListener(this);
+//    audioProcessor.params.tapeTubeDriveParam->addListener(this);
+//    audioProcessor.params.tapeTubeMixParam->addListener(this);
     
     audioProcessor.params.fxSelectParam->addListener(this);
     
@@ -170,10 +174,7 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
 ClipDelayAudioProcessorEditor::~ClipDelayAudioProcessorEditor()
 {
     audioProcessor.params.tempoSyncParam->removeListener(this);
-    
-    audioProcessor.params.tapeTubeDriveParam->removeListener(this);
-    audioProcessor.params.tapeTubeMixParam->removeListener(this);
-    
+    audioProcessor.params.distortionSelectParam->removeListener(this);
     audioProcessor.params.fxSelectParam->removeListener(this);
     
     
@@ -253,22 +254,23 @@ void ClipDelayAudioProcessorEditor::resized()
     //feedback group
     feedbackKnob.setTopLeftPosition(20, 20);
     stereoKnob.setTopLeftPosition(feedbackKnob.getRight() + 30, feedbackKnob.getY());
-    lowCutKnob.setTopLeftPosition(feedbackKnob.getX(), feedbackKnob.getBottom() + 20);
+    lowCutKnob.setTopLeftPosition(feedbackKnob.getX(), feedbackKnob.getBottom() + 10);
     highCutKnob.setTopLeftPosition(lowCutKnob.getRight() + 30, lowCutKnob.getY());
-    preFXButton.setTopLeftPosition(lowCutKnob.getX(), lowCutKnob.getBottom() + 20);
+    preFXButton.setTopLeftPosition(lowCutKnob.getX(), lowCutKnob.getBottom() + 10);
     postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
     
     //fx group
-//    fxAmountKnob.setTopLeftPosition(fxSelectKnob.getX(), highCutKnob.getY() + 10);
-//    preFXButton.setTopLeftPosition(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10);
-//    postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
+    
     fxSelectKnob.setTopLeftPosition(60, 8);
+    distortionSelectBox.setBounds(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10, tempoSyncButton.getWidth() + 20, tempoSyncButton.getHeight());
+//    distortionSelectBox.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 50);
+    
     tapeTubeDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
     tapeTubeMixKnob.setTopLeftPosition(tapeTubeDriveKnob.getRight() + 30, tapeTubeDriveKnob.getY());
+    tapeTubeBiasKnob.setTopLeftPosition(tapeTubeDriveKnob.getX(), tapeTubeDriveKnob.getBottom() + 10);
+    tapeTubeCurveKnob.setTopLeftPosition(tapeTubeMixKnob.getX(), tapeTubeMixKnob.getBottom() + 10);
     autoGainButton.setButtonText("Auto Gain");
-    autoGainButton.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 120); //doing this in consideration for
-//    softClipMixKnob.setTopLeftPosition
-//    distortionDriveKnob.setTopLeftPosition(30, 20);
+//    autoGainButton.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 120);
 }
 
 //if(audioProcessor.params.tempoSync) {
@@ -288,8 +290,11 @@ void ClipDelayAudioProcessorEditor::parameterValueChanged(int paramIndex, float 
         if(paramIndex == 8) //DELAY
             updateDelayKnobs(value != 0.0f);
         if(paramIndex == 13) { //FX SELECTOR
-            updateFxKnobs((int)(value * 10), value != 0.0f);
+//            DBG("updating" << value * 2);
+            updateFxKnobs((int)(value * 4), value, true);
         }
+        if(paramIndex == 16)
+            updateDistortionFx((int)(value * 4), true);
 //        if(tempoParam->getParameterID().equalsIgnoreCase("tempoSyncParamID")) {
 //            updateDelayKnobs(value != 0.0f);
 //        }
@@ -305,7 +310,9 @@ void ClipDelayAudioProcessorEditor::parameterValueChanged(int paramIndex, float 
             if(paramIndex == 8)
                 updateDelayKnobs(value != 0.0f);
             if(paramIndex == 13)
-                updateFxKnobs((int)(value * 10), value != 0.0f);
+                updateFxKnobs((int)(value * 4), value, value != 0.0f);
+            if(paramIndex == 16)
+                updateDistortionFx((int)(value * 4), true);
             
         });
     }
@@ -317,24 +324,79 @@ void ClipDelayAudioProcessorEditor::updateDelayKnobs(bool tempoSyncActive)
     delayNoteKnob.setVisible(tempoSyncActive);
 }
 
-void ClipDelayAudioProcessorEditor::updateFxKnobs(int fxIndex, bool flag)
+void ClipDelayAudioProcessorEditor::updateFxKnobs(int fxIndex, float value, bool flag)
 {
     DBG("index value: " << fxIndex);
     switch(fxIndex) {
-        case 0:
-            break;
         case 1:
+            DBG("setting visible");
+            distortionSelectBox.setVisible(flag);
+            updateDistortionFx((int)(value * 4), true);
+//            autoGainButton.setVisible(flag);
             break;
         case 2:
-            tapeTubeDriveKnob.setVisible(flag);
-            tapeTubeMixKnob.setVisible(flag);
-            autoGainButton.setVisible(flag);
+            distortionSelectBox.setVisible(!flag);
+            break;
+        case 3:
+            distortionSelectBox.setVisible(!flag);
+            break;
+        case 4:
+            distortionSelectBox.setVisible(!flag);
             break;
         default:
-            tapeTubeDriveKnob.setVisible(!flag);
-            tapeTubeMixKnob.setVisible(!flag);
-            autoGainButton.setVisible(!flag);
-            break;
+            distortionSelectBox.setVisible(!flag);
+            updateDistortionFx(-1, true);
+//            autoGainButton.setVisible(!flag);
+            
+////            tapeTubeDriveKnob.setVisible(!flag);
+////            tapeTubeMixKnob.setVisible(!flag);
+////            autoGainButton.setVisible(!flag);
+//            tapeTubeDriveKnob.setVisible(flag);
+//            tapeTubeMixKnob.setVisible(flag);
+//            autoGainButton.setVisible(flag);
+//            break;
             
     }
+}
+void ClipDelayAudioProcessorEditor::updateDistortionFx(int distIndex, bool flag)
+{
+    DBG("dist index: " << distIndex);
+    switch(distIndex) {
+        case 0: //TAPE-TUBE
+            tapeTubeDriveKnob.setVisible(flag);
+            tapeTubeMixKnob.setVisible(flag);
+            tapeTubeBiasKnob.setVisible(flag);
+            tapeTubeCurveKnob.setVisible(flag);
+            break;
+        case 1: //ODD-EVEN
+            tapeTubeDriveKnob.setVisible(!flag);
+            tapeTubeMixKnob.setVisible(!flag);
+            tapeTubeBiasKnob.setVisible(!flag);
+            tapeTubeCurveKnob.setVisible(!flag);
+            break;
+        case 2: //SWELL
+            tapeTubeDriveKnob.setVisible(!flag);
+            tapeTubeMixKnob.setVisible(!flag);
+            tapeTubeBiasKnob.setVisible(!flag);
+            tapeTubeCurveKnob.setVisible(!flag);
+            break;
+        case 3: //DECI-CRUSH
+            break;
+        default:
+            DBG("we shouldn't reach this message (distortion FX default); distIndex: " << distIndex);
+            tapeTubeDriveKnob.setVisible(!flag);
+            tapeTubeMixKnob.setVisible(!flag);
+            tapeTubeBiasKnob.setVisible(!flag);
+            tapeTubeCurveKnob.setVisible(!flag);
+    }
+}
+
+void ClipDelayAudioProcessorEditor::updateModulationFx(int modIndex, bool flag)
+{
+    
+}
+
+void ClipDelayAudioProcessorEditor::updateTimeFx(int timeIndex, bool flag)
+{
+    
 }

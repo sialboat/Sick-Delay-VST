@@ -11,6 +11,7 @@
 #include "Parameters.h"
 #include "PluginEditor.h"
 #include "DSP.h"
+#include "Distortion.h"
 
 template<typename T>
 static void castParameter(juce::AudioProcessorValueTreeState& apvts,
@@ -48,6 +49,11 @@ static juce::String stringFromSemitones(float value, int)
 static juce::String stringFromPercent(float value, int)
 {
     return juce::String(int(value)) + " %";
+}
+
+static juce::String stringFromPercentFloat(float value, int)
+{
+    return juce::String(value, 2) + " %";
 }
 
 //converts milliseconds float value to a juce::String value
@@ -100,14 +106,19 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
     castParameter(apvts, clipperButtonParamID, clipperButtonParam);
     
     castParameter(apvts, autoGainParamID, autoGainParam);
+    castParameter(apvts, fxSelectParamID, fxSelectParam);
+    castParameter(apvts, distortionSelectParamID, distortionSelectParam);
+    
     castParameter(apvts, tapeTubeDriveParamID, tapeTubeDriveParam);
     castParameter(apvts, tapeTubeMixParamID, tapeTubeMixParam);
-    castParameter(apvts, fxSelectParamID, fxSelectParam);
+    castParameter(apvts, tapeTubeCurveParamID, tapeTubeCurveParam);
+    castParameter(apvts, tapeTubeBiasParamID, tapeTubeBiasParam);
     
 //    castParameter(apvts, fxLocationButtonParamID, fxLocationButtonParam);
-    castParameter(apvts, delayQualityButtonParamID, delayQualityButtonParam);
+//    castParameter(apvts, delayQualityButtonParamID, delayQualityButtonParam);
 }
 
+//only do this for automatable parameters
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -195,17 +206,31 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
     
     layout.add(std::make_unique<juce::AudioParameterInt>(clipperButtonParamID, "Clipper", 0, 2, 0));
     
+//    juce::StringArray fxTypes = {
+//        "Tape/Tube", "Odd/Even", "Swell", "Deci/Crush", "CWO", "Pitch", "Chorus/Flanger"
+//    };
     
+    //Distortion (0-*): Tape/Tube (0-0), Odd/Even (0-1), Swell (0-2), Deci/Crush (0-3)
+    //Modulation (1-*): FM/AM/RM (1-0), Pitch (1-1), CWO (1-2)
+    //Time (2-*): Reverb (2-0), Chorus (2-1), Flanger(2-2), Phaser(2-3) Disperser (2-4)
+    //Ext. Out (3-0)
     juce::StringArray fxTypes = {
-        "Tape/Tube", "Fold", "Cabinet", "Decimator", "Bitcrusher", "CWO", "Pitch", "Chorus", "Ext. Out"
+        "Bypass", "Distortion", "Modulation", "Time", "Ext. Out"
     };
+//    juce::StringArray fxTypes = {
+//        "Tape/Tube", "Odd/Even", "Swell", "Deci/Crush", "Convolution", "FM/AM/RM", "Reverb", "CWO", "Pitch", "Chorus/Flanger", "Ext. Out"
+//    };
     
     layout.add(std::make_unique<juce::AudioParameterChoice>(fxSelectParamID, "FX", fxTypes, 0));
     
     layout.add(std::make_unique<juce::AudioParameterBool>(filterButtonParamID, "Filter Pre/Post", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(autoGainParamID, "Auto Gain", false));
+    
+    layout.add(std::make_unique<juce::AudioParameterInt>(distortionSelectParamID, "Distortion", 0, 3, 0));
+    
     
     //=========
-    //distortion
+    // tapeTube
     //=========
     layout.add(std::make_unique<juce::AudioParameterFloat>(
        tapeTubeMixParamID,
@@ -221,12 +246,26 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
        0.0f,
        juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromDecibels)
        ));
-    
-    layout.add(std::make_unique<juce::AudioParameterBool>(autoGainParamID, "Auto Gain", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+       tapeTubeCurveParamID,
+       "Tape/Tube",
+       juce::NormalisableRange<float>{0.0f, 100.0f},
+       0.0f,
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)
+       ));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+       tapeTubeBiasParamID,
+       "Bias",
+       juce::NormalisableRange<float>{-100.0f, 100.0f},
+       0.0f,
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercentFloat)
+       ));
+//    layout.add(std::make_unique<juce::AudioParameterFloat>(
+//                                                           tapeTubeCurveParamID, ""))
     
     
     //output buttons
-    layout.add(std::make_unique<juce::AudioParameterInt>(delayQualityButtonParamID, "Interpolation", 0, 3, 1));
+//    layout.add(std::make_unique<juce::AudioParameterInt>(delayQualityButtonParamID, "Interpolation", 0, 3, 1));
     
     
     return layout;
@@ -258,6 +297,8 @@ void Parameters::prepareToPlay(double sampleRate) noexcept
     
     tapeTubeMixSmoother.reset(sampleRate, duration);
     tapeTubeDriveSmoother.reset(sampleRate, duration);
+    tapeTubeBiasSmoother.reset(sampleRate, duration);
+    tapeTubeCurveSmoother.reset(sampleRate, duration);
 //    distortionDriveSmoother.reset(sampleRate, duration);
 }
 
@@ -290,10 +331,17 @@ void Parameters::reset() noexcept
     highCut = 20000.0f;
     highCutSmoother.setCurrentAndTargetValue(highCutParam->get());
     
+    //based on what mode we are in, we should have a different set of parameters set the distortion controls
+    //where does that belong? 
+    
     tapeTubeDrive = 0.0f;
     tapeTubeDriveSmoother.setCurrentAndTargetValue(tapeTubeDriveParam->get());
     tapeTubeMix = 1.0f;
     tapeTubeMixSmoother.setCurrentAndTargetValue(tapeTubeMixParam->get());
+    tapeTubeBias = 0.0f;
+    tapeTubeCurve = 0.0f;
+    tapeTubeBiasSmoother.setCurrentAndTargetValue(tapeTubeBiasParam->get());
+    tapeTubeCurveSmoother.setCurrentAndTargetValue(tapeTubeCurveParam->get());
 //    distortionDriveSmoother.setCurrentAndTargetValue(distortionDriveParam->get());
     
     autoGain = false;
@@ -328,7 +376,9 @@ void Parameters::update() noexcept
     
 //    distortionDriveSmoother.setTargetValue(distortionDriveParam->get());
     
-    spreadSmoother.setTargetValue(spreadParam->get());
+//    spreadSmoother.setTargetValue(spreadParam->get());
+    spread = spreadSmoother.getNextValue();
+//    spread = spreadSmoother.getNextValue();
     
     delayMode = delayModeParam->get();
     filterButton = filterButtonParam->get();
@@ -338,6 +388,8 @@ void Parameters::update() noexcept
     tapeTubeDriveSmoother.setTargetValue(juce::Decibels::decibelsToGain(tapeTubeDriveParam->get()));
     tapeTubeMixSmoother.setTargetValue(tapeTubeMixParam->get() * 0.01f);
     autoGain = autoGainParam->get();
+    tapeTubeCurveSmoother.setTargetValue(tapeTubeCurveParam->get() * 0.01f);
+    tapeTubeBiasSmoother.setTargetValue(tapeTubeBiasParam->get() * 0.01f);
 //    delayMode = apvts.getRawParameterValue(delayModeParamID)->load();
 }
 
@@ -358,7 +410,9 @@ void Parameters::smoothen() noexcept
     lowCut = lowCutSmoother.getNextValue();
     highCut = highCutSmoother.getNextValue();
     
-    tapeTubeDrive = tapeTubeDriveSmoother.getNextValue();
     tapeTubeMix = tapeTubeMixSmoother.getNextValue();
+    tapeTubeBias = tapeTubeBiasSmoother.getNextValue();
+    tapeTubeCurve = tapeTubeCurveSmoother.getNextValue();
+    tapeTubeDrive = tapeTubeDriveSmoother.getNextValue();
 //    distortionDrive = distortionDriveSmoother.getNextValue();
 }
