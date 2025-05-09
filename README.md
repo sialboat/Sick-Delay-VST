@@ -3,7 +3,7 @@ Sick Delay is a work-in-progress Delay Plugin that offers impeccable flexibility
 
 This Delay Plugin has been based off of the delay plugin from the tutorial book ["The Complete Beginner's Guide to Audio Plugin Development"](https://www.theaudioprogrammer.com/books/beginners-plugin-book). I reccommend everybody pick up that book or follow along the online JUCE tutorials for anybody interested in figuring out how to do this on your own.
 
-For more information or diagrams, see the attached documents in the "Press Material" folder.
+For more information or diagrams, see the attached documents in the "Media & Diagrams" folder.
 
 ## Building
 Because this project is currently in development, a lot of planned features are currently missing. However if you would like to build a VST yourself, follow the given instructions (which may or may not work):
