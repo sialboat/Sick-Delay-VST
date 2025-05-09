@@ -111,6 +111,11 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     fxGroup.addChildComponent(tapeTubeMixKnob);
     fxGroup.addChildComponent(tapeTubeCurveKnob);
     fxGroup.addChildComponent(tapeTubeBiasKnob);
+    
+    fxGroup.addChildComponent(oddEvenDriveKnob);
+    fxGroup.addChildComponent(oddEvenMixKnob);
+    fxGroup.addChildComponent(oddEvenCurveKnob);
+    fxGroup.addChildComponent(oddEvenBiasKnob);
 //    fxGroup.addChildComponent(distortionSelectBox);
     juce::StringArray distortions = {
         "Tape/Tube", "Odd/Even", "Swell", "Deci/Crush"
@@ -260,17 +265,21 @@ void ClipDelayAudioProcessorEditor::resized()
     postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
     
     //fx group
-    
     fxSelectKnob.setTopLeftPosition(60, 8);
     distortionSelectBox.setBounds(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10, tempoSyncButton.getWidth() + 20, tempoSyncButton.getHeight());
-//    distortionSelectBox.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 50);
     
     tapeTubeDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
-    tapeTubeMixKnob.setTopLeftPosition(tapeTubeDriveKnob.getRight() + 30, tapeTubeDriveKnob.getY());
-    tapeTubeBiasKnob.setTopLeftPosition(tapeTubeDriveKnob.getX(), tapeTubeDriveKnob.getBottom() + 10);
-    tapeTubeCurveKnob.setTopLeftPosition(tapeTubeMixKnob.getX(), tapeTubeMixKnob.getBottom() + 10);
+    tapeTubeBiasKnob.setTopLeftPosition(tapeTubeDriveKnob.getRight() + 30, tapeTubeDriveKnob.getY());
+    tapeTubeCurveKnob.setTopLeftPosition(tapeTubeDriveKnob.getX(), tapeTubeDriveKnob.getBottom() + 10);
+    tapeTubeMixKnob.setTopLeftPosition(tapeTubeCurveKnob.getRight() + 30, tapeTubeCurveKnob.getY());
+    
+    oddEvenDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
+    oddEvenBiasKnob.setTopLeftPosition(oddEvenDriveKnob.getRight() + 30, oddEvenDriveKnob.getY());
+    oddEvenCurveKnob.setTopLeftPosition(oddEvenDriveKnob.getX(), oddEvenDriveKnob.getBottom() + 10);
+    oddEvenMixKnob.setTopLeftPosition(oddEvenCurveKnob.getRight() + 30, oddEvenCurveKnob.getY());
+    
+
     autoGainButton.setButtonText("Auto Gain");
-//    autoGainButton.setTopLeftPosition(fxSelectKnob.getX() + 10, fxSelectKnob.getBottom() + 120);
 }
 
 //if(audioProcessor.params.tempoSync) {
@@ -326,7 +335,7 @@ void ClipDelayAudioProcessorEditor::updateDelayKnobs(bool tempoSyncActive)
 
 void ClipDelayAudioProcessorEditor::updateFxKnobs(int fxIndex, float value, bool flag)
 {
-    DBG("index value: " << fxIndex);
+//    DBG("index value: " << fxIndex);
     switch(fxIndex) {
         case 1:
             DBG("setting visible");
@@ -358,38 +367,6 @@ void ClipDelayAudioProcessorEditor::updateFxKnobs(int fxIndex, float value, bool
             
     }
 }
-void ClipDelayAudioProcessorEditor::updateDistortionFx(int distIndex, bool flag)
-{
-    DBG("dist index: " << distIndex);
-    switch(distIndex) {
-        case 0: //TAPE-TUBE
-            tapeTubeDriveKnob.setVisible(flag);
-            tapeTubeMixKnob.setVisible(flag);
-            tapeTubeBiasKnob.setVisible(flag);
-            tapeTubeCurveKnob.setVisible(flag);
-            break;
-        case 1: //ODD-EVEN
-            tapeTubeDriveKnob.setVisible(!flag);
-            tapeTubeMixKnob.setVisible(!flag);
-            tapeTubeBiasKnob.setVisible(!flag);
-            tapeTubeCurveKnob.setVisible(!flag);
-            break;
-        case 2: //SWELL
-            tapeTubeDriveKnob.setVisible(!flag);
-            tapeTubeMixKnob.setVisible(!flag);
-            tapeTubeBiasKnob.setVisible(!flag);
-            tapeTubeCurveKnob.setVisible(!flag);
-            break;
-        case 3: //DECI-CRUSH
-            break;
-        default:
-            DBG("we shouldn't reach this message (distortion FX default); distIndex: " << distIndex);
-            tapeTubeDriveKnob.setVisible(!flag);
-            tapeTubeMixKnob.setVisible(!flag);
-            tapeTubeBiasKnob.setVisible(!flag);
-            tapeTubeCurveKnob.setVisible(!flag);
-    }
-}
 
 void ClipDelayAudioProcessorEditor::updateModulationFx(int modIndex, bool flag)
 {
@@ -399,4 +376,35 @@ void ClipDelayAudioProcessorEditor::updateModulationFx(int modIndex, bool flag)
 void ClipDelayAudioProcessorEditor::updateTimeFx(int timeIndex, bool flag)
 {
     
+}
+
+void ClipDelayAudioProcessorEditor::updateDistortionFx(int distIndex, bool flag)
+{
+    DBG("dist index: " << distIndex);
+    switch(distIndex) {
+        case 0: //TAPE-TUBE
+            setTapeTubeVisibility(flag);
+            setOddEvenVisibility(!flag);
+            break;
+        case 1: //ODD-EVEN
+            setTapeTubeVisibility(!flag);
+            setOddEvenVisibility(flag);
+            break;
+        case 2: //SWELL
+            setTapeTubeVisibility(!flag);
+            setOddEvenVisibility(!flag);
+            break;
+        case 3: //DECI-CRUSH
+            setTapeTubeVisibility(!flag);
+            setOddEvenVisibility(!flag);
+            break;
+        default:
+            DBG("we shouldn't reach this message (distortion FX default); distIndex: " << distIndex);
+            setTapeTubeVisibility(!flag);
+            setOddEvenVisibility(!flag);
+//            tapeTubeDriveKnob.setVisible(!flag);
+//            tapeTubeMixKnob.setVisible(!flag);
+//            tapeTubeBiasKnob.setVisible(!flag);
+//            tapeTubeCurveKnob.setVisible(!flag);
+    }
 }

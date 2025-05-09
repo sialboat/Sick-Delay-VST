@@ -45,7 +45,8 @@ float Distortion::processSample(float sample, float mix)
             output = swell(sample, controls.distDrive, controls.distCurve);
             break;
         case 6:
-            output = oddEven(sample, controls.distDrive, controls.distCurve);
+            output = oddEven(sample, controls.distDrive, controls.distCurve, controls.distBias);
+            break;
         default:
             output = input;
             break;
@@ -91,6 +92,9 @@ float Distortion::tapeTube(float sample, float drive, float curve, float bias)
     float tape = (float)(2 / M_PI) * atan(drive * sample + bias);
     float tube = 1 - exp((-1 * abs(sample)) * (drive + (3.7f * bias) * sgn(sample)));
     
+    //log smoothing (figure it out later chief and determine if it sounds good)
+    //return exp ( ((1 - curve) * log(tape)) + (alpha * log(tube)))
+    
     return (1 - curve) * tape + curve * tube;
 }
 
@@ -99,9 +103,9 @@ float Distortion::swell(float sample, float drive, float curve)
     return ((1 + drive) * sample) / (1 + pow((abs(drive * sample)), curve) );
 }
 
-float Distortion::oddEven(float sample, float drive, float curve)
+float Distortion::oddEven(float sample, float drive, float curve, float bias)
 {
-    float odd = tanh(sample * drive);
-    float even = tanh(sample * drive) * tanh(sample * drive);
+    float odd = tanh(sample * drive + bias);
+    float even = tanh(sample * drive) * tanh(sample * drive + bias);
     return (1 - curve) * odd + curve * even;
 }

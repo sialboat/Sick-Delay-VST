@@ -40,6 +40,14 @@ const juce::ParameterID tapeTubeCurveParamID {"tapeTubeCurve", 1};
 const juce::ParameterID tapeTubeBiasParamID {"tapeTubeBias", 1};
 const juce::ParameterID autoGainParamID {"autoGain", 1};
 
+const juce::ParameterID oddEvenDriveParamID {"oddEvenDrive", 1};
+const juce::ParameterID oddEvenMixParamID {"oddEvenMix", 1};
+const juce::ParameterID oddEvenCurveParamID {"oddEvenCurve", 1};
+const juce::ParameterID oddEvenBiasParamID {"oddEvenBias", 1};
+
+const juce::ParameterID delayInertiaSecondsParamID {"delayInertiaSeconds", 1};
+const juce::ParameterID delayInertiaNotesParamID {"delayInertiaNotes", 1};
+
 
 class Parameters
 {
@@ -52,6 +60,27 @@ public:
     void reset() noexcept;
     void update() noexcept;
     void smoothen() noexcept;
+    
+    int getProperFxIndex(int fxTypeIndex)
+    {
+//        DBG(fxTypeIndex);
+        int out = 0;
+        switch(fxTypeIndex) {
+//            case 0:
+//                out = -1;
+//                break;
+            case 1:
+                out = distortionSelect;
+                break;
+            case 2:
+                out = modSelect;
+                break;
+            case 3:
+                out = timeSelect;
+                break;
+        }
+        return out;
+    }
     
     //this is set to 0.0f because C++ can't guarantee every declared vairable to be initially set to 0.
     float gain = 0.0f;
@@ -84,12 +113,19 @@ public:
     bool tempoSync = false;
     
     int distortionSelect = 0; //0 = tapeTube, 1 = Odd/Even, 2 = Swell, 3 = Deci/Crush
+    int modSelect = 0;
+    int timeSelect = 0;
     
     bool autoGain = false;
     float tapeTubeDrive = 0.0f;
     float tapeTubeMix = 0.0f;
     float tapeTubeCurve = 0.0f;
     float tapeTubeBias = 0.0f;
+    
+    float oddEvenDrive = 0.0f;
+    float oddEvenMix = 0.0f;
+    float oddEvenCurve = 0.0f;
+    float oddEvenBias = 0.0f;
     
     juce::AudioParameterBool* tempoSyncParam;
     juce::AudioParameterBool* bypassParam;
@@ -104,15 +140,21 @@ public:
     juce::AudioParameterFloat* tapeTubeMixParam;
     juce::AudioParameterFloat* tapeTubeCurveParam;
     juce::AudioParameterFloat* tapeTubeBiasParam;
-    
     juce::LinearSmoothedValue<float> tapeTubeDriveSmoother;
     juce::LinearSmoothedValue<float> tapeTubeMixSmoother;
     juce::LinearSmoothedValue<float> tapeTubeCurveSmoother;
     juce::LinearSmoothedValue<float> tapeTubeBiasSmoother;
     
-private:
+    juce::AudioParameterFloat* oddEvenDriveParam;
+    juce::AudioParameterFloat* oddEvenMixParam;
+    juce::AudioParameterFloat* oddEvenCurveParam;
+    juce::AudioParameterFloat* oddEvenBiasParam;
+    juce::LinearSmoothedValue<float> oddEvenDriveSmoother;
+    juce::LinearSmoothedValue<float> oddEvenMixSmoother;
+    juce::LinearSmoothedValue<float> oddEvenCurveSmoother;
+    juce::LinearSmoothedValue<float> oddEvenBiasSmoother;
     
-//    juce::AudioProcessorValueTreeState& apvts_;
+private:
     
     juce::AudioParameterFloat* gainParam;
     juce::LinearSmoothedValue<float> gainSmoother;
@@ -124,6 +166,9 @@ private:
     
     juce::AudioParameterFloat* mixParam;
     juce::LinearSmoothedValue<float> mixSmoother;
+    
+    juce::AudioParameterFloat* inertiaParam; //inertia is in seconds
+    juce::LinearSmoothedValue<float> inertiaParamSmoother;
     
     juce::AudioParameterFloat* feedbackParam;
     juce::LinearSmoothedValue<float> feedbackSmoother;

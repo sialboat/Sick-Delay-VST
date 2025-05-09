@@ -50,6 +50,27 @@ static juce::String stringFromPercent(float value, int)
 {
     return juce::String(int(value)) + " %";
 }
+static juce::String stringFromPercentOddEven(float value, int)
+{
+    //at 0 (12:00), 50% odd, 50% even
+    //at -100, we have 100% odd, 0% even
+    //at 100, we have 0% odd, 100% even
+    //value > 0, more even
+    float odd = 100.0f - value;
+    float even = value;
+    
+    return juce::String((int) odd) + " / " + juce::String((int) even) + " %";
+    
+}
+static juce::String stringFromPercentTapeTube(float value, int)
+{
+    //at value == 100, we have 0/100
+    //at value == 0, we have 100/0
+    float tape = 100.0f - value;
+    float tube = value;
+    
+    return juce::String((int) tape) + " / " + juce::String((int) tube) + " %";
+}
 
 static juce::String stringFromPercentFloat(float value, int)
 {
@@ -100,7 +121,7 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
     castParameter(apvts, tempoSyncParamID, tempoSyncParam);
     castParameter(apvts, delayNoteParamID, delayNoteParam);
     castParameter(apvts, bypassParamID, bypassParam);
-//    castParameter(apvts, distortionDriveParamID, distortionDriveParam);
+
     castParameter(apvts, delayModeParamID, delayModeParam);
     castParameter(apvts, filterButtonParamID, filterButtonParam);
     castParameter(apvts, clipperButtonParamID, clipperButtonParam);
@@ -114,8 +135,11 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
     castParameter(apvts, tapeTubeCurveParamID, tapeTubeCurveParam);
     castParameter(apvts, tapeTubeBiasParamID, tapeTubeBiasParam);
     
-//    castParameter(apvts, fxLocationButtonParamID, fxLocationButtonParam);
-//    castParameter(apvts, delayQualityButtonParamID, delayQualityButtonParam);
+    castParameter(apvts, oddEvenDriveParamID, oddEvenDriveParam);
+    castParameter(apvts, oddEvenMixParamID, oddEvenMixParam);
+    castParameter(apvts, oddEvenCurveParamID, oddEvenCurveParam);
+    castParameter(apvts, oddEvenBiasParamID, oddEvenBiasParam);
+    
 }
 
 //only do this for automatable parameters
@@ -236,7 +260,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
        tapeTubeMixParamID,
        "Mix",
        juce::NormalisableRange<float>(0.0f, 100.0f, 1.0f),
-       40.0f,
+       100.0f,
        juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(
@@ -250,16 +274,46 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
        tapeTubeCurveParamID,
        "Tape/Tube",
        juce::NormalisableRange<float>{0.0f, 100.0f},
-       0.0f,
-       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)
+       50.0f,
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercentTapeTube)
        ));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
        tapeTubeBiasParamID,
        "Bias",
        juce::NormalisableRange<float>{-100.0f, 100.0f},
        0.0f,
-       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercentFloat)
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)
        ));
+    
+    // ========
+    // oddEven
+    // ========
+    layout.add(std::make_unique<juce::AudioParameterFloat> (
+        oddEvenDriveParamID,
+        "Drive",
+        juce::NormalisableRange<float> {0.0f, 24.0f},
+        0.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromDecibels)));
+    layout.add(std::make_unique<juce::AudioParameterFloat>  (
+         oddEvenMixParamID,
+         "Mix",
+         juce::NormalisableRange<float> {0.0f, 100.0f, 1.0f},
+         100.0f,
+         juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+       oddEvenCurveParamID,
+       "Odd/Even",
+       juce::NormalisableRange<float> {0.0f, 100.0f, 1.0f},
+       50.0f,
+       juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercentOddEven)));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (
+        oddEvenBiasParamID,
+        "Bias",
+        juce::NormalisableRange<float> {-100.0f, 100.0f},
+        0.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)));
+    
+    
 //    layout.add(std::make_unique<juce::AudioParameterFloat>(
 //                                                           tapeTubeCurveParamID, ""))
     
@@ -299,7 +353,11 @@ void Parameters::prepareToPlay(double sampleRate) noexcept
     tapeTubeDriveSmoother.reset(sampleRate, duration);
     tapeTubeBiasSmoother.reset(sampleRate, duration);
     tapeTubeCurveSmoother.reset(sampleRate, duration);
-//    distortionDriveSmoother.reset(sampleRate, duration);
+    
+    oddEvenDriveSmoother.reset(sampleRate, duration);
+    oddEvenMixSmoother.reset(sampleRate, duration);
+    oddEvenBiasSmoother.reset(sampleRate, duration);
+    oddEvenCurveSmoother.reset(sampleRate, duration);
 }
 
 void Parameters::reset() noexcept
@@ -335,18 +393,28 @@ void Parameters::reset() noexcept
     //where does that belong? 
     
     tapeTubeDrive = 0.0f;
-    tapeTubeDriveSmoother.setCurrentAndTargetValue(tapeTubeDriveParam->get());
+    tapeTubeDriveSmoother.setCurrentAndTargetValue(juce::Decibels::decibelsToGain(tapeTubeDriveParam->get()));
     tapeTubeMix = 1.0f;
     tapeTubeMixSmoother.setCurrentAndTargetValue(tapeTubeMixParam->get());
     tapeTubeBias = 0.0f;
     tapeTubeCurve = 0.0f;
     tapeTubeBiasSmoother.setCurrentAndTargetValue(tapeTubeBiasParam->get());
     tapeTubeCurveSmoother.setCurrentAndTargetValue(tapeTubeCurveParam->get());
+    
+    oddEvenDrive = 0.0f;
+    oddEvenDriveSmoother.setCurrentAndTargetValue(juce::Decibels::decibelsToGain(oddEvenDriveParam->get()));
+    oddEvenMix = 1.0f;
+    oddEvenMixSmoother.setCurrentAndTargetValue(oddEvenMixParam->get());
+    oddEvenBias = 0.0f;
+    oddEvenBiasSmoother.setCurrentAndTargetValue(oddEvenBiasParam->get());
+    oddEvenCurve = 0.0f;
+    oddEvenCurveSmoother.setCurrentAndTargetValue(oddEvenCurveParam->get());
 //    distortionDriveSmoother.setCurrentAndTargetValue(distortionDriveParam->get());
     
     autoGain = false;
     filterButton = false;
     delayMode = false;
+    distortionSelect = 0;
 }
 
 void Parameters::update() noexcept
@@ -375,7 +443,6 @@ void Parameters::update() noexcept
     bypassed = bypassParam->get();
     
 //    distortionDriveSmoother.setTargetValue(distortionDriveParam->get());
-    
 //    spreadSmoother.setTargetValue(spreadParam->get());
     spread = spreadSmoother.getNextValue();
 //    spread = spreadSmoother.getNextValue();
@@ -385,11 +452,19 @@ void Parameters::update() noexcept
     
     clipperMode = clipperButtonParam->get();
     
+    distortionSelect = distortionSelectParam->get();
+    
+    autoGain = autoGainParam->get();
+
     tapeTubeDriveSmoother.setTargetValue(juce::Decibels::decibelsToGain(tapeTubeDriveParam->get()));
     tapeTubeMixSmoother.setTargetValue(tapeTubeMixParam->get() * 0.01f);
-    autoGain = autoGainParam->get();
     tapeTubeCurveSmoother.setTargetValue(tapeTubeCurveParam->get() * 0.01f);
     tapeTubeBiasSmoother.setTargetValue(tapeTubeBiasParam->get() * 0.01f);
+    
+    oddEvenDriveSmoother.setTargetValue(juce::Decibels::decibelsToGain(oddEvenDriveParam->get()));
+    oddEvenMixSmoother.setTargetValue(oddEvenMixParam->get() * 0.01f);
+    oddEvenCurveSmoother.setTargetValue(oddEvenCurveParam->get() * 0.01f);
+    oddEvenBiasSmoother.setTargetValue(oddEvenBiasParam->get() * 0.01f);
 //    delayMode = apvts.getRawParameterValue(delayModeParamID)->load();
 }
 
@@ -414,5 +489,10 @@ void Parameters::smoothen() noexcept
     tapeTubeBias = tapeTubeBiasSmoother.getNextValue();
     tapeTubeCurve = tapeTubeCurveSmoother.getNextValue();
     tapeTubeDrive = tapeTubeDriveSmoother.getNextValue();
+    
+    oddEvenMix = oddEvenMixSmoother.getNextValue();
+    oddEvenBias = oddEvenBiasSmoother.getNextValue();
+    oddEvenCurve = oddEvenCurveSmoother.getNextValue();
+    oddEvenDrive = oddEvenDriveSmoother.getNextValue();
 //    distortionDrive = distortionDriveSmoother.getNextValue();
 }

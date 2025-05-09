@@ -105,7 +105,7 @@ float DelayLine::lagrange(float delayInSamples) const noexcept
 
 float DelayLine::hermite(float delayInSamples) const noexcept
 {
-    DBG("Now Playing: Hermite Interpolation");
+//    DBG("Now Playing: Hermite Interpolation");
     jassert(delayInSamples >= 1.0f);
     jassert(delayInSamples <= bufferLength - 2.0f);
     
@@ -149,7 +149,7 @@ float DelayLine::hermite(float delayInSamples) const noexcept
 
 float DelayLine::cubic(float delayInSamples) const noexcept
 {
-    DBG("Now Playing: Cubic Interpolation");
+//    DBG("Now Playing: Cubic Interpolation");
     jassert(delayInSamples >= 1.0f);
     jassert(delayInSamples <= bufferLength - 3.0f);
 
@@ -180,7 +180,7 @@ float DelayLine::cubic(float delayInSamples) const noexcept
 
 float DelayLine::linear(float delayInSamples) const noexcept
 {
-    DBG("Now Playing: Linear Interpolation");
+//    DBG("Now Playing: Linear Interpolation");
     jassert(delayInSamples >= 0.0f);
     jassert(delayInSamples <= bufferLength - 1.0f);
 

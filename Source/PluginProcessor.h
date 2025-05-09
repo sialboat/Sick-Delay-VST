@@ -70,7 +70,11 @@ public:
     juce::AudioProcessorParameter* getBypassParameter() const override;
     float processEffect(int fxIndex, float sample);
     
+    void calculateAnalogDelayTime(float& currentDelayTime, float& targetDelayTime, float& sample);
+    void calculateDigitalDelayTime();
+    
 private:
+    
     DelayLine delayLineL, delayLineR;
     std::unique_ptr <Distortion> outputClipper;
     std::unique_ptr <Distortion> fxDistortion;

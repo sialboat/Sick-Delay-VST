@@ -126,6 +126,23 @@ private:
     void updateModulationFx(int modIndex, bool flag);
     void updateTimeFx(int timeIndex, bool flag);
     
+    void setTapeTubeVisibility(bool flag)
+    {
+        tapeTubeDriveKnob.setVisible(flag);
+        tapeTubeMixKnob.setVisible(flag);
+        tapeTubeBiasKnob.setVisible(flag);
+        tapeTubeCurveKnob.setVisible(flag);
+    };
+    
+    void setOddEvenVisibility(bool flag)
+    {
+        oddEvenDriveKnob.setVisible(flag);
+        oddEvenMixKnob.setVisible(flag);
+        oddEvenBiasKnob.setVisible(flag);
+        oddEvenCurveKnob.setVisible(flag);
+    };
+    
+    
     ClipDelayAudioProcessor& audioProcessor;
     
     
@@ -152,8 +169,13 @@ private:
     
     RotaryKnob tapeTubeDriveKnob {"Drive", audioProcessor.apvts, tapeTubeDriveParamID};
     RotaryKnob tapeTubeMixKnob {"Mix", audioProcessor.apvts, tapeTubeMixParamID};
-    RotaryKnob tapeTubeCurveKnob {"Tape/Tube", audioProcessor.apvts, tapeTubeCurveParamID};
+    RotaryKnob tapeTubeCurveKnob {"Tape/Tube", audioProcessor.apvts, tapeTubeCurveParamID, true};
     RotaryKnob tapeTubeBiasKnob {"Bias", audioProcessor.apvts, tapeTubeBiasParamID, true};
+    
+    RotaryKnob oddEvenDriveKnob {"Drive", audioProcessor.apvts, oddEvenDriveParamID};
+    RotaryKnob oddEvenMixKnob {"Mix", audioProcessor.apvts, oddEvenMixParamID};
+    RotaryKnob oddEvenCurveKnob {"Odd/Even", audioProcessor.apvts, oddEvenCurveParamID, true};
+    RotaryKnob oddEvenBiasKnob {"Bias", audioProcessor.apvts, oddEvenBiasParamID, true};
     
     juce::TextButton tempoSyncButton;
     juce::TextButton delayModeButton;
@@ -175,7 +197,7 @@ private:
     
     juce::ComboBox distortionSelectBox;
     juce::AudioProcessorValueTreeState::ComboBoxAttachment distortionSelectAttachment {
-        audioProcessor.apvts, distortionSelectParamID.getParamID(),distortionSelectBox
+        audioProcessor.apvts, distortionSelectParamID.getParamID(), distortionSelectBox
     };
     
     juce::ComboBox modulationSelectBox;

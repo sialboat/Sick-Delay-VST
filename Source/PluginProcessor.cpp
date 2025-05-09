@@ -166,13 +166,36 @@ bool ClipDelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 float ClipDelayAudioProcessor::processEffect(int fxIndex, float sample)
 {
 //    DBG("fx index: " << fxIndex);
-
+//    DBG(params.fxSelect);
+//    DBG(params.tapeTubeDrive);
+//    DBG("Mix: " << params.oddEvenMix << ", Drive: " << params.oddEvenDrive << ", Bias " << params.oddEvenBias << ", Curve: " << params.oddEvenCurve);
+    //each other combobox parameter for time, modulation, etc. must have different indexes. distortion has 0-3!
     float output = sample;
     switch(fxIndex) {
         case 0: //tapeTube
-            fxDistortion->setMode(fxIndex);
+            fxDistortion->setMode(4);
+            fxDistortion->setDriveCurveBias(params.tapeTubeDrive,
+                                            params.tapeTubeCurve,
+                                            params.tapeTubeBias);
             output = fxDistortion->processSample(sample, params.tapeTubeMix);
         break;
+        case 1: //oddEven
+            fxDistortion->setMode(6);
+            fxDistortion->setDriveCurveBias(params.oddEvenDrive,
+                                            params.oddEvenCurve,
+                                            params.oddEvenBias);
+            output = fxDistortion->processSample(sample, params.oddEvenMix);
+            break;
+        case 2: //soar
+            fxDistortion->setMode(5);
+//            fxDistortion->setDriveCurveBias()
+//            output = fxDistortion->processSample(sample, )
+//            fxDistortion->setMode();
+            break;
+        case 3:
+            break;
+        case 4:
+            break;
     }
     return output;
 }
@@ -190,13 +213,6 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
-    
-//    bool filterButtonTest = false;
-//    filterButtonTest = params.filterButton;
-//    if(filterButtonTest)
-//        DBG("filter button: PRE");
-//    else
-//        DBG("filter button: POST");
     
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
@@ -230,6 +246,7 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
     
 //    auto choice = apvts.getRawParameterValue(delayModeParamID.getParamID())->load();
 //    DBG("choice: " << choice << " param: " << params.delayMode);
+//    DBG(apvts.getRawParameterValue(distortionSelectParamID.getParamID())->load() << " " << apvts.getRawParameterValue(fxSelectParamID.getParamID())->load());
     
     //1 OR TRUE is crossfading, 0 OR FALSE is varispeed
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
@@ -239,10 +256,8 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
         
         float delayTimeL = delayTime + params.spread;
         float delayTimeR = delayTime - params.spread;
-        
-        //in case delay time goes over or under min/max
-        delayTimeL = juce::jlimit(5.0f, 5000.0f, delayTimeL);
-        delayTimeR = juce::jlimit(5.0f, 5000.0f, delayTimeR);
+        delayTimeL = juce::jlimit(1.0f, 5000.0f, delayTimeL);
+        delayTimeR = juce::jlimit(1.0f, 5000.0f, delayTimeR);
         
         delayInSamplesL = delayTimeL / 1000.0f * sampleRate;
         delayInSamplesR = delayTimeR / 1000.0f * sampleRate;
@@ -327,8 +342,11 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
 //            feedbackL = processEffect(params.fxSelect / 100, sample);
 //            feedbackR = processEffect(params.fxSelect / 100, sample);
 //        }
+//        DBG("fx index: " << params.getProperFxIndex(params.fxSelect));
+        wetL = processEffect(params.getProperFxIndex(params.fxSelect), wetL);
+        wetR = processEffect(params.getProperFxIndex(params.fxSelect), wetR);
+//        DBG(wetL << " " << wetR);
         
-        //or effect processing here
         feedbackL = wetL * params.feedback;
         feedbackR = wetR * params.feedback;
                     
@@ -355,8 +373,10 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
         mixL = outputClipper->processSample(mixL, 1.0f);
         mixR = outputClipper->processSample(mixR, 1.0f);
         
-        float outL = mixL * params.gain;
-        float outR = mixR * params.gain;
+//        float outL = mixL * params.gain;
+//        float outR = mixR * params.gain;
+        float outL = wetL * params.gain;
+        float outR = wetR * params.gain;
         
         //bypass button
         if(params.bypassed) {

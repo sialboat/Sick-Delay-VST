@@ -42,6 +42,17 @@ public:
         controls.distDrive = distDrive_;
         controls.distCurve = distCurve_;
     }
+    void setDriveCurveBias(float distDrive_, float distCurve_, float distBias_)
+    {
+        controls.distDrive = distDrive_;
+        controls.distCurve = distCurve_;
+        controls.distBias = distBias_;
+    }
+    void setDriveCurve(float distDrive_, float distCurve_)
+    {
+        controls.distDrive = distDrive_;
+        controls.distCurve = distCurve_;
+    }
     
     
 private:
@@ -52,9 +63,7 @@ private:
     float inflator(float sample, float curve);
     float cubic(float sample);
     float tapeTube(float sample, float drive, float curve, float bias);
-    float oddEven (float sample, float drive, float curve);
+    float oddEven (float sample, float drive, float curve, float bias);
     float swell (float sample, float drive, float curve);
-    
-    //this won't be fully implemented for the release version as there are far too many effects to think about here
     float saturator(float sample); //we can try arctan(2xalpha/pi) x>=0 and arctan(alphax) x <= 0
 };
