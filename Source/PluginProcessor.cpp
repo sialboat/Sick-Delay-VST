@@ -300,8 +300,14 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
 
         //we process the effect somewhere here i think
         
-        delayLineL.write(mono*params.panL + feedbackR); //push these samples into the delay line
-        delayLineR.write(mono*params.panR + feedbackL); //alternating L and R for ping-pong delay
+        if(mainInputChannels == 1) { //for mono compatability
+            delayLineL.write(mono*params.panL + feedbackR); //push these samples into the delay line
+            delayLineR.write(mono*params.panR + feedbackL); //alternating L and R for ping-pong delay
+        } else if(mainInputChannels >= 2) {
+            delayLineL.write(dryL*params.panL + feedbackR);
+            delayLineR.write(dryR*params.panR + feedbackL);
+        }
+        
         
         float wetL = delayLineL.read(delayInSamplesL, params.delayQuality); //reading delayed samples with stereo spread
         float wetR = delayLineR.read(delayInSamplesR, params.delayQuality);
