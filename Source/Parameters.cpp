@@ -413,7 +413,7 @@ void Parameters::reset() noexcept
     
     autoGain = false;
     filterButton = false;
-    delayMode = false;
+    delayMode = 0;
     distortionSelect = 0;
 }
 
@@ -444,7 +444,7 @@ void Parameters::update() noexcept
     
 //    distortionDriveSmoother.setTargetValue(distortionDriveParam->get());
 //    spreadSmoother.setTargetValue(spreadParam->get());
-    spread = spreadSmoother.getNextValue();
+    spreadSmoother.setTargetValue(spreadParam->get());
 //    spread = spreadSmoother.getNextValue();
     
     delayMode = delayModeParam->get();

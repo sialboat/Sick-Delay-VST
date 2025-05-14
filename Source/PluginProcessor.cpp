@@ -121,7 +121,7 @@ void ClipDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     targetDelayR = 0.0f;
     xfadeL = 0.0f;
     xfadeR = 0.0f;
-    xfadeInc = static_cast<float>(1.0 / (0.05 * sampleRate)); //50ms based on the incoming sample size
+    xfadeInc = static_cast<float>(1.0f / (0.05f * sampleRate)); //10s0ms based on the incoming sample size
     
 //    spread = 0.0f;
     
@@ -241,12 +241,6 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
     
     float maxL = 0.0f;
     float maxR = 0.0f;
-    //    DBG("Spread: " << params.spread);
-    //use the juce::dsp::WaveShaper class to to add a clipper / drive
-    
-//    auto choice = apvts.getRawParameterValue(delayModeParamID.getParamID())->load();
-//    DBG("choice: " << choice << " param: " << params.delayMode);
-//    DBG(apvts.getRawParameterValue(distortionSelectParamID.getParamID())->load() << " " << apvts.getRawParameterValue(fxSelectParamID.getParamID())->load());
     
     //1 OR TRUE is crossfading, 0 OR FALSE is varispeed
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
@@ -263,25 +257,42 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
         delayInSamplesR = delayTimeR / 1000.0f * sampleRate;
 //            float delayTime = params.tempoSync ? syncedTime : params.delayTime;
         
-        if(params.delayMode) { // == 1
-            if(xfadeL == 0.0f || xfadeR == 0.0f) {
+        if(params.delayMode == 1) { // == 1
+            if(xfadeL == 0.0f) {
                 targetDelayL = delayTimeL / 1000.0f * sampleRate;
-                targetDelayR = delayTimeR / 1000.0f * sampleRate;
-                
-                if(delayInSamplesL == 0.0f) {
+                if(delayInSamplesL == 0.0f)
                     delayInSamplesL = targetDelayL;
-                }
-                if(delayInSamplesR == 0.0f) {
-                    delayInSamplesR = targetDelayR;
-                }
-                if (std::abs(targetDelayL - delayInSamplesL) > 0.01f) {
-//                    if (targetDelayL != delayInSamplesL) {
+                else if(std::abs(targetDelayL - delayInSamplesL) > 0.01f)
                     xfadeL = xfadeInc;
-                }
-                if (std::abs(targetDelayR - delayInSamplesR) > 0.01f) {
-                    xfadeR = xfadeInc;
-                }
             }
+            if(xfadeR == 0.0f) {
+                targetDelayR = delayTimeR / 1000.0f * sampleRate;
+                if(delayInSamplesR == 0.0f)
+                    delayInSamplesR = targetDelayR;
+                else if(std::abs(targetDelayR - delayInSamplesR) > 0.01f)
+                    xfadeR = xfadeInc;
+            }
+//            if(xfadeL == 0.0f || xfadeR == 0.0f) {
+//                targetDelayR = delayTimeR / 1000.0f * sampleRate;
+//                
+//                if(delayInSamplesL == 0.0f) {
+//                    delayInSamplesL = targetDelayL;
+//                }
+//                else if (targetDelayL != delayInSamplesL)
+//                    xfadeL = xfadeInc;
+////                else if (std::abs(targetDelayL - delayInSamplesL) > 0.01f) {
+////                    //                    if (targetDelayL != delayInSamplesL) {
+////                    xfadeL = xfadeInc;
+////                }
+//                if(delayInSamplesR == 0.0f) {
+//                    delayInSamplesR = targetDelayR;
+//                }
+//                else if (targetDelayR != delayInSamplesR)
+//                    xfadeR = xfadeInc;
+////                else if (std::abs(targetDelayR - delayInSamplesR) > 0.01f) {
+////                    xfadeR = xfadeInc;
+////                }
+//            }
         }
 
         if(params.lowCut != lastLowCut) {
@@ -312,7 +323,7 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
         float wetL = delayLineL.read(delayInSamplesL, params.delayQuality); //reading delayed samples with stereo spread
         float wetR = delayLineR.read(delayInSamplesR, params.delayQuality);
 //
-        if(params.delayMode) {
+        if(params.delayMode == 1) {
             if(xfadeL > 0.0f) {
                 //read new sample values at the new delay length
                 float newL = delayLineL.read(targetDelayL, params.delayQuality);
@@ -349,8 +360,8 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
 //            feedbackR = processEffect(params.fxSelect / 100, sample);
 //        }
 //        DBG("fx index: " << params.getProperFxIndex(params.fxSelect));
-        wetL = processEffect(params.getProperFxIndex(params.fxSelect), wetL);
-        wetR = processEffect(params.getProperFxIndex(params.fxSelect), wetR);
+//        wetL = processEffect(params.getProperFxIndex(params.fxSelect), wetL);
+//        wetR = processEffect(params.getProperFxIndex(params.fxSelect), wetR);
 //        DBG(wetL << " " << wetR);
         
         feedbackL = wetL * params.feedback;
@@ -379,10 +390,8 @@ void ClipDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[
         mixL = outputClipper->processSample(mixL, 1.0f);
         mixR = outputClipper->processSample(mixR, 1.0f);
         
-//        float outL = mixL * params.gain;
-//        float outR = mixR * params.gain;
-        float outL = wetL * params.gain;
-        float outR = wetR * params.gain;
+        float outL = mixL * params.gain;
+        float outR = mixR * params.gain;
         
         //bypass button
         if(params.bypassed) {

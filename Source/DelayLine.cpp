@@ -44,7 +44,6 @@ void DelayLine::write(float input) noexcept
     jassert(bufferLength > 0);
     
     //increment writeIndex, wrap back around if it exceeds bufferLength
-//    writeIndex = (writeIndex + 1) % bufferLength;
     writeIndex++;
     if(writeIndex >= bufferLength)
         writeIndex = 0;
@@ -76,7 +75,7 @@ float DelayLine::read(float delayInSamples, int mode) const noexcept
 
 float DelayLine::lagrange(float delayInSamples) const noexcept
 {
-    jassert(delayInSamples >= 1.0f);
+    jassert(delayInSamples >= 2.0f);
     jassert(delayInSamples <= bufferLength - 3.0f);
 
     int integerDelay = static_cast<int>(delayInSamples);
