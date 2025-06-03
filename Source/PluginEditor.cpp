@@ -16,40 +16,57 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-        
-    delayGroup.setText("Delay");
-    delayGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
-    delayGroup.addAndMakeVisible(delayTimeKnob);
-    delayGroup.addChildComponent(delayNoteKnob);
-    delayGroup.addAndMakeVisible(spreadKnob);
-    addAndMakeVisible(delayGroup);
     
-    feedbackGroup.setText("Feedback");
-    feedbackGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
-    feedbackGroup.addAndMakeVisible(feedbackKnob);
-    feedbackGroup.addAndMakeVisible(stereoKnob);
-    feedbackGroup.addAndMakeVisible(lowCutKnob);
-    feedbackGroup.addAndMakeVisible(highCutKnob);
-    addAndMakeVisible(feedbackGroup);
+    //    delayGroup.setText("Delay");
+    //    delayGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+    //    delayGroup.addAndMakeVisible(delayTimeKnob);
+    //    delayGroup.addChildComponent(delayNoteKnob);
+    //    delayGroup.addAndMakeVisible(spreadKnob);
+    //    addAndMakeVisible(delayGroup);
     
-    outputGroup.setText("Output");
-    outputGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
-    outputGroup.addAndMakeVisible(gainKnob);
-    outputGroup.addAndMakeVisible(mixKnob);
-    outputGroup.addAndMakeVisible(meter);
-    addAndMakeVisible(outputGroup);
+    setupTextButton(tempoSyncButton, juce::String("Sync"), {0, 0, 70, 27}, true, ButtonLookAndFeel::get());
+    setupTextButton(clipperButton, clipperText[clipperButtonIndex], {0, 0, 70, 35}, true, EnabledButtonLookAndFeel::get());
+    setupComboBox(delayMode, juce::String("Delay Mode"), {"Analog", "Digital"}, {1, 2}, true, 1, ComboBoxLookAndFeel::get());
+    setupComboBox(delayQualityBox, "Delay Quality", {"Linear", "Lagrange", "Cubic", "Hermite"}, {1, 2, 3, 4}, true, 2, ComboBoxLookAndFeel::get());
     
-    tempoSyncButton.setButtonText("Sync");
-    tempoSyncButton.setClickingTogglesState(true);
-    tempoSyncButton.setBounds(0, 0, 70, 27);
-    tempoSyncButton.setLookAndFeel(ButtonLookAndFeel::get());
-    delayGroup.addAndMakeVisible(tempoSyncButton);
+//    setupTextButton();
     
-    clipperButton.setButtonText(clipperText[clipperButtonIndex]);
-    clipperButton.setClickingTogglesState(true);
-    clipperButton.setBounds(0, 0, 70, 27);
-    clipperButton.setLookAndFeel(EnabledButtonLookAndFeel::get());
-    outputGroup.addAndMakeVisible(clipperButton);
+    setupGroups(delayGroup, juce::String("Delay"), juce::Justification::horizontallyCentred, {&delayTimeKnob, &spreadKnob, &tempoSyncButton, &delayMode, }, {&delayNoteKnob});
+    
+    setupGroups(feedbackGroup, juce::String("Feedback"),  juce::Justification::horizontallyCentred,  {&feedbackKnob, &stereoKnob, &lowCutKnob, &highCutKnob, &preFXButton, &postFXButton});
+    
+    setupGroups(outputGroup, juce::String("Output"), juce::Justification::horizontallyCentred, {&gainKnob, &mixKnob, &meter});
+    
+//    setupGroups(fxGroup)
+    
+    
+    
+//    feedbackGroup.setText("Feedback");
+//    feedbackGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+//    feedbackGroup.addAndMakeVisible(feedbackKnob);
+//    feedbackGroup.addAndMakeVisible(stereoKnob);
+//    feedbackGroup.addAndMakeVisible(lowCutKnob);
+//    feedbackGroup.addAndMakeVisible(highCutKnob);
+//    addAndMakeVisible(feedbackGroup);
+    
+//    outputGroup.setText("Output");
+//    outputGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+//    outputGroup.addAndMakeVisible(gainKnob);
+//    outputGroup.addAndMakeVisible(mixKnob);
+//    outputGroup.addAndMakeVisible(meter);
+//    addAndMakeVisible(outputGroup);
+    
+//    tempoSyncButton.setButtonText("Sync");
+//    tempoSyncButton.setClickingTogglesState(true);
+//    tempoSyncButton.setBounds(0, 0, 70, 27);
+//    tempoSyncButton.setLookAndFeel(ButtonLookAndFeel::get());
+//    delayGroup.addAndMakeVisible(tempoSyncButton);
+    
+//    clipperButton.setButtonText(clipperText[clipperButtonIndex]);
+//    clipperButton.setClickingTogglesState(true);
+//    clipperButton.setBounds(0, 0, 70, 27);
+//    clipperButton.setLookAndFeel(EnabledButtonLookAndFeel::get());
+//    outputGroup.addAndMakeVisible(clipperButton);
     
     clipperButton.onClick = [this]()
     {
@@ -57,30 +74,33 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
         clipperButton.setButtonText(clipperText[clipperButtonIndex]);
     };
     
-    comboBox.setEnabled(true);
-    comboBox.setLookAndFeel(ComboBoxLookAndFeel::get()); //forgot this line lmao
-    comboBox.addItem("Analog", 1);
-    comboBox.addItem("Digital", 2);
-    comboBox.setSelectedId(1);
+//    comboBox.setEnabled(true);
+//    comboBox.setLookAndFeel(ComboBoxLookAndFeel::get()); //forgot this line lmao
+//    comboBox.addItem("Analog", 1);
+//    comboBox.addItem("Digital", 2);
+//    comboBox.setSelectedId(1);
+//    
+//    delayGroup.addAndMakeVisible(comboBox);
     
-    delayGroup.addAndMakeVisible(comboBox);
-    
-    delayQualityBox.setEnabled(true);
-    delayQualityBox.setLookAndFeel(ComboBoxLookAndFeel::get());
-    delayQualityBox.addItem("Linear", 1);
-    delayQualityBox.addItem("Lagrange", 2);
-    delayQualityBox.addItem("Cubic", 3);
-    delayQualityBox.addItem("Hermite", 4);
-    delayQualityBox.setSelectedId(2);
-    
-    outputGroup.addAndMakeVisible(delayQualityBox);
+//    delayQualityBox.setEnabled(true);
+//    delayQualityBox.setLookAndFeel(ComboBoxLookAndFeel::get());
+//    delayQualityBox.addItem("Linear", 1);
+//    delayQualityBox.addItem("Lagrange", 2);
+//    delayQualityBox.addItem("Cubic", 3);
+//    delayQualityBox.addItem("Hermite", 4);
+//    delayQualityBox.setSelectedId(2);
+//    
+//    outputGroup.addAndMakeVisible(delayQualityBox);
     
     //for the clipper button
     
     fxGroup.setText("FX");
     fxGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
 //    fxGroup.addAndMakeVisible(fxAmountKnob);
-    fxGroup.addAndMakeVisible(fxSelectKnob);
+    fxGroup.addAndMakeVisible(fxSelectBox);
+    fxSelectBox.setEnabled(true);
+    fxSelectBox.setLookAndFeel(ComboBoxLookAndFeel::get());
+    
     preFXButton.setButtonText("Pre");
     preFXButton.setClickingTogglesState(true);
     preFXButton.setBounds(0, 0, 35, 27);
@@ -154,10 +174,9 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
     
     updateDelayKnobs(audioProcessor.params.tempoSyncParam->get());
     updateFxKnobs(audioProcessor.params.fxSelectParam->getIndex(), -1, true);
-    updateDistortionFx(audioProcessor.params.distortionSelectParam->get(), true);
+//    updateDistortionFx(audioProcessor.params.distortionSelectParam->get(), true);
     
     audioProcessor.params.tempoSyncParam->addListener(this);
-    audioProcessor.params.distortionSelectParam->addListener(this);
 //    audioProcessor.params.tapeTubeDriveParam->addListener(this);
 //    audioProcessor.params.tapeTubeMixParam->addListener(this);
     
@@ -179,7 +198,6 @@ ClipDelayAudioProcessorEditor::ClipDelayAudioProcessorEditor (ClipDelayAudioProc
 ClipDelayAudioProcessorEditor::~ClipDelayAudioProcessorEditor()
 {
     audioProcessor.params.tempoSyncParam->removeListener(this);
-    audioProcessor.params.distortionSelectParam->removeListener(this);
     audioProcessor.params.fxSelectParam->removeListener(this);
     
     
@@ -243,7 +261,7 @@ void ClipDelayAudioProcessorEditor::resized()
     delayNoteKnob.setTopLeftPosition(delayTimeKnob.getX(), delayTimeKnob.getY());
     spreadKnob.setTopLeftPosition(20, tempoSyncButton.getBottom() + 20);
     delayModeButton.setTopLeftPosition(20, spreadKnob.getBottom() + 20);
-    comboBox.setBounds(spreadKnob.getX(), spreadKnob.getBottom() + 5,
+    delayMode.setBounds(spreadKnob.getX(), spreadKnob.getBottom() + 5,
                        tempoSyncButton.getWidth(), tempoSyncButton.getHeight());
 //    comboBox.setTopLeftPosition(spreadKnob.getX(), spreadKnob.getBottom() + 10, 100, 36);
 //    comboBox.setBounds(spreadKnob.getX(), spreadKnob.getBottom() + 10, 100, 36);
@@ -265,15 +283,16 @@ void ClipDelayAudioProcessorEditor::resized()
     postFXButton.setTopLeftPosition(preFXButton.getRight(), preFXButton.getY());
     
     //fx group
-    fxSelectKnob.setTopLeftPosition(60, 8);
-    distortionSelectBox.setBounds(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10, tempoSyncButton.getWidth() + 20, tempoSyncButton.getHeight());
+    fxSelectBox.setBounds(60, 8, 70, 37);
+//    fxSelectKnob.setTopLeftPosition(60, 8);
+//    distortionSelectBox.setBounds(fxSelectKnob.getX(), fxSelectKnob.getBottom() + 10, tempoSyncButton.getWidth() + 20, tempoSyncButton.getHeight());
     
-    tapeTubeDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
+    tapeTubeDriveKnob.setTopLeftPosition(fxSelectBox.getX() - 40, highCutKnob.getY());
     tapeTubeBiasKnob.setTopLeftPosition(tapeTubeDriveKnob.getRight() + 30, tapeTubeDriveKnob.getY());
     tapeTubeCurveKnob.setTopLeftPosition(tapeTubeDriveKnob.getX(), tapeTubeDriveKnob.getBottom() + 10);
     tapeTubeMixKnob.setTopLeftPosition(tapeTubeCurveKnob.getRight() + 30, tapeTubeCurveKnob.getY());
     
-    oddEvenDriveKnob.setTopLeftPosition(fxSelectKnob.getX() - 40, highCutKnob.getY());
+    oddEvenDriveKnob.setTopLeftPosition(fxSelectBox.getX() - 40, highCutKnob.getY());
     oddEvenBiasKnob.setTopLeftPosition(oddEvenDriveKnob.getRight() + 30, oddEvenDriveKnob.getY());
     oddEvenCurveKnob.setTopLeftPosition(oddEvenDriveKnob.getX(), oddEvenDriveKnob.getBottom() + 10);
     oddEvenMixKnob.setTopLeftPosition(oddEvenCurveKnob.getRight() + 30, oddEvenCurveKnob.getY());

@@ -128,7 +128,6 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
     
     castParameter(apvts, autoGainParamID, autoGainParam);
     castParameter(apvts, fxSelectParamID, fxSelectParam);
-    castParameter(apvts, distortionSelectParamID, distortionSelectParam);
     
     castParameter(apvts, tapeTubeDriveParamID, tapeTubeDriveParam);
     castParameter(apvts, tapeTubeMixParamID, tapeTubeMixParam);
@@ -452,7 +451,6 @@ void Parameters::update() noexcept
     
     clipperMode = clipperButtonParam->get();
     
-    distortionSelect = distortionSelectParam->get();
     
     autoGain = autoGainParam->get();
 

@@ -100,7 +100,7 @@ public:
 
     int fxLocation = 1; //0 = fx processes dry signal only. 1 = fx is in feedback loop. 2 = fx processes dry and wet signal
     int delayQuality = 1; //0 = linear, 1 = lagrange, 2 = cubic, 3 = hermite. This is a ComboBox
-    int fxSelect = 0; //0 = distortion, 1 = modulation, 2 = time, 3 = ext.out
+    int fxSelect = 0; //This is a ComboBox
     
     bool filterButton = false; //false == PRE filter, TRUE == POST filter
     
@@ -134,7 +134,6 @@ public:
     juce::AudioParameterBool* autoGainParam;
     
     juce::AudioParameterChoice* fxSelectParam;
-    juce::AudioParameterInt* distortionSelectParam;
     
     juce::AudioParameterFloat* tapeTubeDriveParam;
     juce::AudioParameterFloat* tapeTubeMixParam;

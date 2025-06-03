@@ -23,12 +23,6 @@
 class MultiStateButtonAttachment : private juce::Button::Listener
 {
 public:
-//    ThreeStateButtonAttachment(juce::AudioProcessorValueTreeState& apvts,
-//                               const juce::String& parameterID, juce::TextButton button_)
-//    : state(apvts), paramID(parameterID), button(button_)
-//    {
-//
-//    }
     
     MultiStateButtonAttachment(juce::AudioProcessorValueTreeState& apvts_,
                                const juce::String& parameterID, juce::Button& buttonToUse)
@@ -95,7 +89,6 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MultiStateButtonAttachment)
 };
-
 //==============================================================================
 
 // private thing is to let the processor editor know when to make things visible / invisible.
@@ -142,6 +135,50 @@ private:
         oddEvenCurveKnob.setVisible(flag);
     };
     
+    void setupTextButton(juce::TextButton& button, const juce::String& name, const std::vector<int>& textButtonBounds,
+                         bool canClick, juce::LookAndFeel* lookAndFeel) {
+        button.setButtonText(name);
+        button.setBounds(textButtonBounds.at(0), textButtonBounds.at(1), textButtonBounds.at(2), textButtonBounds.at(3));
+        button.setClickingTogglesState(canClick);
+        button.setLookAndFeel(lookAndFeel);
+//        group.addAndMakeVisible(button);
+    }
+    
+    void setupGroups(juce::GroupComponent& group, const juce::String& name, juce::Justification justification, const std::vector<juce::Component*>& items, const std::vector<juce::Component*>& children = {})
+    {
+        group.setName(name);
+        group.setTextLabelPosition(justification);
+        for(juce::Component* c : items)
+            group.addAndMakeVisible(c);
+        for(juce::Component* c : children)
+            group.addChildComponent(c);
+    }
+    
+    void setupComboBox(juce::ComboBox& comboBox, const juce::String& name, const juce::StringArray& items, const std::vector<int>& itemIds,
+                       bool enabled, int selectedId, juce::LookAndFeel* lookAndFeel,
+                       const std::vector<int>& comboButtonBounds = {0, 0, 70, 27})
+    {
+        comboBox.setName(name);
+        comboBox.setLookAndFeel(lookAndFeel);
+        comboBox.setEnabled(enabled);
+        
+        int itemCount = 0;
+            comboBox.setBounds(comboButtonBounds.at(0), comboButtonBounds.at(1),
+                               comboButtonBounds.at(2), comboButtonBounds.at(3));
+        for(int i = 0; i < items.size(); i++) {
+            if(items[i].substring(0, 3) == "SEP") {
+                comboBox.addSeparator();
+                comboBox.addSectionHeading(items[i].substring(3));
+            } else {
+                comboBox.addItem(items[i], itemIds[(int)itemCount]);
+                itemCount++;
+            }
+        }
+        
+        comboBox.setSelectedId(selectedId);
+//        group.addAndMakeVisible(comboBox);
+    }
+    
     
     ClipDelayAudioProcessor& audioProcessor;
     
@@ -165,7 +202,6 @@ private:
     RotaryKnob highCutKnob {"High Cut", audioProcessor.apvts, highCutParamID, false};
     
     RotaryKnob delayNoteKnob {"Note", audioProcessor.apvts, delayNoteParamID};
-    RotaryKnob fxSelectKnob {"Mode", audioProcessor.apvts, fxSelectParamID, false, 88, 108, 36};
     
     RotaryKnob tapeTubeDriveKnob {"Drive", audioProcessor.apvts, tapeTubeDriveParamID};
     RotaryKnob tapeTubeMixKnob {"Mix", audioProcessor.apvts, tapeTubeMixParamID};
@@ -192,6 +228,8 @@ private:
     };
     
     juce::ComboBox delayQualityBox;
+    juce::ComboBox fxSelectBox;
+    int fxSelectIndex = 0;
     juce::TextButton fxLocationButton;
     int fxLocationIndex = 0;
     
@@ -225,10 +263,10 @@ private:
     
     juce::GroupComponent delayGroup, feedbackGroup, outputGroup, fxGroup;
     
-    juce::ComboBox comboBox;
+    juce::ComboBox delayMode;
     
-    juce::AudioProcessorValueTreeState::ComboBoxAttachment comboBoxAttachment {
-        audioProcessor.apvts, delayModeParamID.getParamID(), comboBox
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment delayModeAttachment {
+        audioProcessor.apvts, delayModeParamID.getParamID(), delayMode
     };
     
     juce::AudioProcessorValueTreeState::ButtonAttachment filterButtonAttachment {
